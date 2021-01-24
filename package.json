@@ -1,0 +1,16 @@
+{
+    "name": "openrct2-title-editor",
+    "version": "1.0.0",
+    "description": "Title Sequence Editor plugin for OpenRCT2",
+    "license": "MIT",
+    "author": "OpenRCT2",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc && npm run copy",
+        "copy": "copy out\\title-editor.js \"%HOMEDRIVE%%HOMEPATH%\\Documents\\OpenRCT2\\plugin\""
+    },
+    "devDependencies": {
+        "tsc-watch": "^4.2.9",
+        "typescript": "^4.1.3"
+    }
+}
