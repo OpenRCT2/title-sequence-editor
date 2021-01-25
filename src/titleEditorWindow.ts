@@ -170,31 +170,6 @@ class TitleEditorWindow {
                 this.refreshCommands();
                 break;
         }
-
-        // const listView = this.window.findWidget<ListView>('list');
-        // if (listView) {
-        //     if (this.window.tabIndex === 1) {
-        //         listView.items = [
-        //             "donkey.sv6",
-        //             "some_other_save.sv6"
-        //         ];
-        //     }
-        //     if (this.window.tabIndex === 2) {
-        //         listView.items = [
-        //             ["Load", "CocoaBayou.sv6"],
-        //             ["Rotate", "2"],
-        //             ["Location", "85 67"],
-        //             ["Wait", "11600"],
-        //             ["Rotate", "3"],
-        //             ["Location", "68 52"],
-        //             ["Wait", "9700"],
-        //             ["Load", "NinSFOT.sv6"],
-        //             ["Rotate", "3"],
-        //             ["Location", "55 164"],
-        //             ["Wait", "9900"]
-        //         ];
-        //     }
-        // }
     }
 
     onUpdate() {
@@ -386,8 +361,75 @@ class TitleEditorWindow {
         }
     }
 
-    refreshCommands() {
+    static getCommandArgument(parks: TitleSequencePark[], command: TitleSequenceCommand) {
+        switch (command.type) {
+            case 'load':
+                {
+                    const c = <LoadTitleSequenceCommand>command;
+                    if (c.index >= 0 && c.index < parks.length) {
+                        return parks[c.index].fileName;
+                    } else {
+                        return 'No save selected';
+                    }
+                }
+            case 'location':
+                {
+                    const c = <LocationTitleSequenceCommand>command;
+                    return `${c.x}, ${c.y}`;
+                }
+            case 'rotate':
+                {
+                    const c = <RotateTitleSequenceCommand>command;
+                    return c.rotations.toString();
+                }
+            case 'zoom':
+                {
+                    const c = <ZoomTitleSequenceCommand>command;
+                    return c.zoom.toString();
+                }
+            case 'follow':
+                {
+                    const c = <FollowTitleSequenceCommand>command;
+                    return c.id.toString();
+                }
+            case 'speed':
+                {
+                    const c = <SpeedTitleSequenceCommand>command;
+                    return c.speed.toString();
+                }
+            case 'wait':
+                {
+                    const c = <WaitTitleSequenceCommand>command;
+                    return c.duration.toString();
+                }
+            case 'loadsc':
+                {
+                    const c = <LoadScenarioTitleSequenceCommand>command;
+                    return c.scenario;
+                }
+        }
+        return "";
+    }
 
+    refreshCommands() {
+        const titleSequence = this.getSelectedTitleSequence();
+
+        const listView = this.window.findWidget<ListView>('list');
+        if (listView) {
+            if (titleSequence) {
+                listView.items = titleSequence.commands.map(x => {
+                    const descriptor = getCommandDescriptor(x.type);
+                    if (descriptor) {
+                        const arg = TitleEditorWindow.getCommandArgument(titleSequence.parks, x);
+                        return [getString(descriptor.name), arg];
+                    } else {
+                        return ['Unknown', ''];
+                    }
+                });
+            } else {
+                listView.items = [];
+            }
+        }
     }
 
     getUniqueFileName(path: string) {

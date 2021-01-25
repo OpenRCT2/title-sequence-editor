@@ -23,28 +23,37 @@ interface CommandDesc {
     desc: string;
 }
 
+const CommandDescriptors: CommandDesc[] = [
+    { id: 'load', name: 'STR_TITLE_EDITOR_ACTION_LOAD_SAVE', desc: 'STR_TITLE_EDITOR_ARGUMENT_SAVEFILE' },
+    { id: 'loadsc', name: 'STR_TITLE_EDITOR_ACTION_LOAD_SCENARIO', desc: 'STR_TITLE_EDITOR_ARGUMENT_SCENARIO' },
+    { id: 'location', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_LOCATION', desc: 'STR_TITLE_EDITOR_ARGUMENT_COORDINATES' },
+    { id: 'rotate', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ROTATE', desc: 'STR_TITLE_EDITOR_ARGUMENT_ROTATIONS' },
+    { id: 'zoom', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ZOOM', desc: 'STR_TITLE_EDITOR_ARGUMENT_ZOOM_LEVEL' },
+    { id: 'speed', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_SPEED', desc: 'STR_TITLE_EDITOR_ARGUMENT_SPEED' },
+    { id: 'follow', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_FOLLOW', desc: '' },
+    { id: 'wait', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_WAIT', desc: 'STR_TITLE_EDITOR_ARGUMENT_WAIT_SECONDS' },
+    { id: 'restart', name: 'STR_TITLE_EDITOR_RESTART', desc: '' },
+    { id: 'end', name: 'STR_TITLE_EDITOR_END', desc: '' },
+];
+
+function getCommandDescriptor(id: CommandId) {
+    for (const d of CommandDescriptors) {
+        if (d.id === id) {
+            return d;
+        }
+    }
+    return null;
+}
+
 class CommandEditorWindow {
 
     static readonly className = 'title-sequence-editor-command';
-
-    static readonly commandDescriptors: CommandDesc[] = [
-        { id: 'load', name: 'STR_TITLE_EDITOR_ACTION_LOAD_SAVE', desc: 'STR_TITLE_EDITOR_ARGUMENT_SAVEFILE' },
-        { id: 'loadsc', name: 'STR_TITLE_EDITOR_ACTION_LOAD_SCENARIO', desc: 'STR_TITLE_EDITOR_ARGUMENT_SCENARIO' },
-        { id: 'location', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_LOCATION', desc: 'STR_TITLE_EDITOR_ARGUMENT_COORDINATES' },
-        { id: 'rotate', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ROTATE', desc: 'STR_TITLE_EDITOR_ARGUMENT_ROTATIONS' },
-        { id: 'zoom', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ZOOM', desc: 'STR_TITLE_EDITOR_ARGUMENT_ZOOM_LEVEL' },
-        { id: 'speed', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_SPEED', desc: 'STR_TITLE_EDITOR_ARGUMENT_SPEED' },
-        { id: 'follow', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_FOLLOW', desc: '' },
-        { id: 'wait', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_WAIT', desc: 'STR_TITLE_EDITOR_ARGUMENT_WAIT_SECONDS' },
-        { id: 'restart', name: 'STR_TITLE_EDITOR_RESTART', desc: '' },
-        { id: 'end', name: 'STR_TITLE_EDITOR_END', desc: '' },
-    ];
 
     window: Window;
     currentCommand: number;
 
     open() {
-        const commands = CommandEditorWindow.commandDescriptors.map(x => getString(x.name));
+        const commands = CommandDescriptors.map(x => getString(x.name));
         this.window = ui.openWindow({
             classification: CommandEditorWindow.className,
             title: getString('STR_TITLE_COMMAND_EDITOR_TITLE'),
@@ -84,7 +93,7 @@ class CommandEditorWindow {
     }
 
     private onGetClick() {
-        var command = CommandEditorWindow.commandDescriptors[this.currentCommand];
+        var command = CommandDescriptors[this.currentCommand];
         if (command.id === 'location') {
             var pos = ui.mainViewport.getCentrePosition();
             pos.x = Math.round(pos.x / 32);
@@ -115,7 +124,7 @@ class CommandEditorWindow {
         const yTextBox = w.findWidget<TextBoxWidget>('textbox-y');
         const fullTextBox = w.findWidget<TextBoxWidget>('textbox-full');
 
-        var command = CommandEditorWindow.commandDescriptors[index];
+        var command = CommandDescriptors[index];
         if (descLabel) {
             descLabel.text = command.desc == '' ? '' : getString(command.desc);
         }
