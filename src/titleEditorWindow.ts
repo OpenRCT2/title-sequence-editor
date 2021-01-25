@@ -1,8 +1,28 @@
 const SPR_G2_BEGIN = 29357;
-const SPR_G2_TITLE_RESTART = SPR_G2_BEGIN + 29;
-const SPR_G2_TITLE_STOP = SPR_G2_BEGIN + 30;
-const SPR_G2_TITLE_PLAY = SPR_G2_BEGIN + 31;
-const SPR_G2_TITLE_SKIP = SPR_G2_BEGIN + 32;
+const SPR_G2_TITLE_RESTART = SPR_G2_BEGIN + 28;
+const SPR_G2_TITLE_STOP = SPR_G2_BEGIN + 29;
+const SPR_G2_TITLE_PLAY = SPR_G2_BEGIN + 30;
+const SPR_G2_TITLE_SKIP = SPR_G2_BEGIN + 31;
+
+namespace Path {
+    export function getBaseName(path: string) {
+        const a = path.lastIndexOf('\\');
+        const b = path.lastIndexOf('/');
+        const lastSlash = Math.max(a, b);
+        return lastSlash === -1 ? path : path.substr(lastSlash + 1);
+    }
+
+    export function getBaseNameWithoutExtension(path: string) {
+        const baseName = getBaseName(path);
+        const dotIndex = path.lastIndexOf('.');
+        return dotIndex === -1 ? baseName : baseName.substr(0, dotIndex);
+    }
+
+    export function getExtension(path: string) {
+        const dotIndex = path.lastIndexOf('.');
+        return dotIndex === -1 ? '' : path.substr(dotIndex);
+    }
+}
 
 const showInputBox = (title: string, text: string, value: string, callback: (value: string) => void) => {
     ui.showTextInput({
@@ -66,9 +86,9 @@ class TitleEditorWindow {
                     },
                     widgets: [
                         <ButtonWidget>{ name: 'btn-add', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onAddParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_ADD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_ADD_TIP') },
-                        <ButtonWidget>{ name: 'btn-remove', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onRemoveParkClick(),text: getString('STR_TITLE_EDITOR_ACTION_REMOVE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_REMOVE_TIP') },
-                        <ButtonWidget>{ name: 'btn-rename', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onRenameParkClick(),text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_TIP') },
-                        <ButtonWidget>{ name: 'btn-load', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onLoadParkClick(),text: getString('STR_TITLE_EDITOR_ACTION_LOAD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_LOAD_TIP') },
+                        <ButtonWidget>{ name: 'btn-remove', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onRemoveParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_REMOVE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_REMOVE_TIP') },
+                        <ButtonWidget>{ name: 'btn-rename', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onRenameParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_TIP') },
+                        <ButtonWidget>{ name: 'btn-load', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onLoadParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_LOAD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_LOAD_TIP') },
 
                         <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
                         <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
@@ -235,6 +255,18 @@ class TitleEditorWindow {
     }
 
     onAddParkClick() {
+        ui.showFileBrowse({
+            type: 'load',
+            fileType: 'game',
+            callback: path => {
+                const titleSequence = this.getSelectedTitleSequence();
+                if (titleSequence) {
+                    let fileName = this.getUniqueFileName(path);
+                    titleSequence.addPark(path, fileName);
+                    this.refreshParks();
+                }
+            }
+        });
     }
 
     onRemoveParkClick() {
@@ -250,8 +282,12 @@ class TitleEditorWindow {
         if (park) {
             showInputBox('Rename', 'New file name for park', park.fileName, value => {
                 if (value) {
-                    park.fileName = value;
-                    this.refreshParks();
+                    if (this.fileNameExists(value)) {
+                        ui.showError("Can't rename park", "Name already exists");
+                    } else {
+                        park.fileName = value;
+                        this.refreshParks();
+                    }
                 }
             });
         }
@@ -352,5 +388,30 @@ class TitleEditorWindow {
 
     refreshCommands() {
 
+    }
+
+    getUniqueFileName(path: string) {
+        let fileName = Path.getBaseName(path);
+        if (this.fileNameExists(fileName)) {
+            const left = Path.getBaseNameWithoutExtension(fileName);
+            const right = Path.getExtension(fileName);
+            let number = 2;
+            do {
+                fileName = left + number.toString() + right;
+                number++;
+            } while (this.fileNameExists(fileName));
+        }
+        return fileName;
+    }
+
+    fileNameExists(fileName: string) {
+        fileName = fileName.toLowerCase();
+        const titleSequence = this.getSelectedTitleSequence();
+        for (const park of titleSequence.parks) {
+            if (park.fileName.toLowerCase() === fileName) {
+                return true;
+            }
+        }
+        return false;
     }
 }
