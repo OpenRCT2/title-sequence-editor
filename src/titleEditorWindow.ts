@@ -53,12 +53,16 @@ class TitleEditorWindow {
     }
 
     constructor() {
+        const width = 320;
+        const height = 127;
         this.window = ui.openWindow({
             classification: TitleEditorWindow.className,
             title: getString('STR_TITLE_EDITOR_TITLE'),
             colours: [1, 15, 15],
-            width: 320,
-            height: 127,
+            x: (ui.width - width) / 2,
+            y: (ui.height - height) / 2,
+            width: width,
+            height: height,
             widgets: [],
             onUpdate: () => this.onUpdate(),
             onTabChange: () => this.onTabChange(),
@@ -104,8 +108,8 @@ class TitleEditorWindow {
                         frameDuration: 4
                     },
                     widgets: [
-                        <ButtonWidget>{ name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
-                        <ButtonWidget>{ name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
+                        <ButtonWidget>{ name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onInsertCommand(), text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
+                        <ButtonWidget>{ name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onEditCommand(), text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
                         <ButtonWidget>{ name: 'btn-delete', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onDeleteCommand(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
                         <ButtonWidget>{ name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
                         <ButtonWidget>{ name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
@@ -158,6 +162,7 @@ class TitleEditorWindow {
                 this.window.minHeight = 270;
                 this.window.maxHeight = 580;
                 this.refreshParks();
+                break;
             case TitleEditorWindow.tabCommands:
                 this.window.minWidth = 320;
                 this.window.maxWidth = 500;
@@ -268,12 +273,55 @@ class TitleEditorWindow {
 
     }
 
+    onInsertCommand() {
+        const pos = {
+            x: this.window.x + (this.window.width / 2),
+            y: this.window.y + (this.window.height / 2)
+        };
+        CommandEditorWindow.getOrOpen(pos, null, command => {
+            const titleSequence = this.getSelectedTitleSequence();
+            if (titleSequence) {
+                let commands = titleSequence.commands;
+                const selectedIndex = this.getSelectedCommandIndex();
+                let insertIndex: number;
+                if (selectedIndex === undefined) {
+                    commands.push(command);
+                    insertIndex = commands.length - 1;
+                } else {
+                    commands.splice(selectedIndex, 0, command);
+                    insertIndex = selectedIndex;
+                }
+                titleSequence.commands = commands;
+                this.refreshCommands();
+                this.setSelectedCommandIndex(insertIndex);
+            }
+        });
+    }
+
+    onEditCommand() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            const selectedIndex = this.getSelectedCommandIndex();
+            if (selectedIndex !== undefined) {
+                const pos = {
+                    x: this.window.x + (this.window.width / 2),
+                    y: this.window.y + (this.window.height / 2)
+                };
+                const command = titleSequence.commands[selectedIndex];
+                CommandEditorWindow.getOrOpen(pos, command, command => {
+                    titleSequence.commands[selectedIndex] = command;
+                    this.refreshCommands();
+                });
+            }
+        }
+    }
+
     onDeleteCommand() {
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
             const listView = this.window.findWidget<ListView>('list');
             if (listView) {
-                const selectedIndex = listView.selectedCell?.row;
+                const selectedIndex = this.getSelectedCommandIndex();
                 if (selectedIndex !== undefined) {
                     let commands = titleSequence.commands;
                     commands.splice(selectedIndex, 1);
@@ -486,7 +534,9 @@ class TitleEditorWindow {
         }
 
         for (const btn of [editButton, deleteButton]) {
-            btn.isDisabled = isReadOnly || selectedIndex === undefined;
+            if (btn) {
+                btn.isDisabled = isReadOnly || selectedIndex === undefined;
+            }
         }
 
         if (skipToButton) {

@@ -42,27 +42,33 @@ function getCommandDescriptor(id: CommandId) {
             return d;
         }
     }
-    return null;
+    throw new Error(`command id (${id}) not present in descriptor table`);
 }
+
+type InsertCommandCallback = (command: TitleSequenceCommand) => void;
 
 class CommandEditorWindow {
 
     static readonly className = 'title-sequence-editor-command';
 
     window: Window;
-    currentCommand: number;
+    callback: InsertCommandCallback;
 
-    constructor() {
+    constructor(pos: ScreenCoordsXY, command: TitleSequenceCommand | null, callback: InsertCommandCallback) {
         const commands = CommandDescriptors.map(x => getString(x.name));
+        const width = 200;
+        const height = 120;
         this.window = ui.openWindow({
             classification: CommandEditorWindow.className,
             title: getString('STR_TITLE_COMMAND_EDITOR_TITLE'),
             colours: [1, 15, 15],
-            width: 200,
-            height: 120,
+            x: pos.x - (width / 2),
+            y: pos.y - (height / 2),
+            width: width,
+            height: height,
             widgets: [
                 <LabelWidget>{ type: "label", x: 16, y: 18, width: 168, height: 12, text: getString('STR_TITLE_COMMAND_EDITOR_COMMAND_LABEL') },
-                <DropdownWidget>{ type: "dropdown", x: 16, y: 32, width: 168, height: 12, items: commands, selectedIndex: 0, onChange: this.onCommandChange },
+                <DropdownWidget>{ type: "dropdown", x: 16, y: 32, width: 168, height: 12, items: commands, selectedIndex: 0, onChange: index => this.onCommandChange(), name: 'dropdown-type' },
                 <LabelWidget>{ type: "label", x: 16, y: 56, width: 168, height: 12, name: 'label-desc' },
 
                 <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 168, height: 12, name: 'textbox-full', maxLength: 6 },
@@ -76,19 +82,28 @@ class CommandEditorWindow {
 
                 <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-sprite' },
 
-                <ButtonWidget>{ type: "button", x: 10, y: 99, width: 71, height: 14, onClick: this.onOkClick, text: getString('STR_OK') },
-                <ButtonWidget>{ type: "button", x: 120, y: 99, width: 71, height: 14, onClick: this.onCancelClick, text: getString('STR_CANCEL') },
+                <ButtonWidget>{ type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
+                <ButtonWidget>{ type: "button", x: 120, y: 99, width: 71, height: 14, onClick: () => this.onCancelClick(), text: getString('STR_CANCEL') },
             ]
         });
         if (!this.window) {
             throw new Error();
         }
-        this.currentCommand = 0;
-        this.onCommandChange(0);
+        this.callback = callback;
+
+        if (command) {
+            this.setCommand(command);
+        } else {
+            const id = this.getCommandId();
+            if (id) {
+                this.initialiseWidgetsForCommand(id);
+            }
+        }
     }
 
     private onOkClick() {
         this.window.close();
+        this.callback(this.getCommand());
     }
 
     private onCancelClick() {
@@ -96,28 +111,39 @@ class CommandEditorWindow {
     }
 
     private onGetClick() {
-        var command = CommandDescriptors[this.currentCommand];
-        if (command.id === 'location') {
-            var pos = ui.mainViewport.getCentrePosition();
-            pos.x = Math.round(pos.x / 32);
-            pos.y = Math.round(pos.y / 32);
+        const id = this.getCommandId();
+        if (id !== undefined) {
+            var command = getCommandDescriptor(id);
+            if (command.id === 'location') {
+                var pos = ui.mainViewport.getCentrePosition();
+                pos.x = Math.round(pos.x / 32);
+                pos.y = Math.round(pos.y / 32);
 
-            var xTextBox = this.window.findWidget<TextBoxWidget>('textbox-x');
-            if (xTextBox) {
-                xTextBox.text = pos.x.toString();
-            }
+                var xTextBox = this.window.findWidget<TextBoxWidget>('textbox-x');
+                if (xTextBox) {
+                    xTextBox.text = pos.x.toString();
+                }
 
-            var yTextBox = this.window.findWidget<TextBoxWidget>('textbox-y');
-            if (yTextBox) {
-                yTextBox.text = pos.y.toString();
+                var yTextBox = this.window.findWidget<TextBoxWidget>('textbox-y');
+                if (yTextBox) {
+                    yTextBox.text = pos.y.toString();
+                }
             }
         }
     }
 
-    onCommandChange(index: number) {
-        this.currentCommand = index;
+    onCommandChange() {
+        const id = this.getCommandId();
+        if (id !== undefined) {
+            this.initialiseWidgetsForCommand(id);
+        }
+    }
+
+    initialiseWidgetsForCommand(id: CommandId) {
+        var command = getCommandDescriptor(id);
 
         const w = this.window;
+        const typeDropdown = this.window.findWidget<DropdownWidget>('dropdown-type');
         const descLabel = w.findWidget<LabelWidget>('label-desc');
         const getLocationButton = w.findWidget<ButtonWidget>('btn-get-location');
         const selectScenarioButton = w.findWidget<ButtonWidget>('btn-select-scenario');
@@ -127,7 +153,10 @@ class CommandEditorWindow {
         const yTextBox = w.findWidget<TextBoxWidget>('textbox-y');
         const fullTextBox = w.findWidget<TextBoxWidget>('textbox-full');
 
-        var command = CommandDescriptors[index];
+        if (typeDropdown) {
+            typeDropdown.selectedIndex = CommandDescriptors.indexOf(command);
+        }
+
         if (descLabel) {
             descLabel.text = command.desc == '' ? '' : getString(command.desc);
         }
@@ -202,13 +231,37 @@ class CommandEditorWindow {
         setVisibility(fullTextBox, ['load', 'loadsc', 'rotate', 'zoom', 'wait']);
     }
 
-    static getOrOpen() {
+    getCommandId() {
+        const typeDropdown = this.window.findWidget<DropdownWidget>('dropdown-type');
+        if (typeDropdown) {
+            const index = typeDropdown.selectedIndex;
+            if (index >= 0 && index < CommandDescriptors.length) {
+                return CommandDescriptors[index].id;
+            }
+        }
+        return undefined;
+    }
+
+    getCommand(): TitleSequenceCommand {
+        return {
+            type: 'restart'
+        };
+    }
+
+    setCommand(command: TitleSequenceCommand) {
+        this.initialiseWidgetsForCommand(command.type);
+        switch (command.type) {
+            case 'restart':
+            case 'end':
+                break;
+        }
+    }
+
+    static getOrOpen(pos: ScreenCoordsXY, command: TitleSequenceCommand | null, callback: InsertCommandCallback) {
         var w = ui.getWindow(CommandEditorWindow.className);
         if (w) {
             w.close();
-            return null;
-        } else {
-            return new CommandEditorWindow();
         }
+        return new CommandEditorWindow(pos, command, callback);
     }
 }
