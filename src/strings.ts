@@ -59,7 +59,7 @@ const strings: { [lang: string]: { [name: string]: string } } = {
 
 var getString = (name: string) => {
     let lang = context.configuration.get<string>("general.language");
-    if (lang in strings) {
+    if (lang && lang in strings) {
         let localised = strings[lang];
         if (name in localised) {
             return localised[name];

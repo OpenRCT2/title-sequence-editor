@@ -52,7 +52,7 @@ class CommandEditorWindow {
     window: Window;
     currentCommand: number;
 
-    open() {
+    constructor() {
         const commands = CommandDescriptors.map(x => getString(x.name));
         this.window = ui.openWindow({
             classification: CommandEditorWindow.className,
@@ -80,8 +80,11 @@ class CommandEditorWindow {
                 <ButtonWidget>{ type: "button", x: 120, y: 99, width: 71, height: 14, onClick: this.onCancelClick, text: getString('STR_CANCEL') },
             ]
         });
+        if (!this.window) {
+            throw new Error();
+        }
+        this.currentCommand = 0;
         this.onCommandChange(0);
-        return this.window;
     }
 
     private onOkClick() {
@@ -203,9 +206,9 @@ class CommandEditorWindow {
         var w = ui.getWindow(CommandEditorWindow.className);
         if (w) {
             w.close();
+            return null;
         } else {
-            let result = new CommandEditorWindow();
-            return result.open();
+            return new CommandEditorWindow();
         }
     }
 }

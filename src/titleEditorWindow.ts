@@ -49,11 +49,10 @@ class TitleEditorWindow {
         if (w) {
             w.close();
         }
-        let result = new TitleEditorWindow();
-        return result.open();
+        return new TitleEditorWindow();
     }
 
-    open() {
+    constructor() {
         this.window = ui.openWindow({
             classification: TitleEditorWindow.className,
             title: getString('STR_TITLE_EDITOR_TITLE'),
@@ -105,25 +104,27 @@ class TitleEditorWindow {
                         frameDuration: 4
                     },
                     widgets: [
-                        <ButtonWidget>{ type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
-                        <ButtonWidget>{ type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
-                        <ButtonWidget>{ type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
+                        <ButtonWidget>{ name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
+                        <ButtonWidget>{ name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
+                        <ButtonWidget>{ name: 'btn-delete', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onDeleteCommand(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
                         <ButtonWidget>{ name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
-                        <ButtonWidget>{ type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
-                        <ButtonWidget>{ type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
+                        <ButtonWidget>{ name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
+                        <ButtonWidget>{ name: 'btn-movedown', type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', onClick: () => this.onMoveCommandDown(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
 
                         <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
                         <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
                         <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
                         <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
 
-                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, columns: [{ width: 80 }, {}] }
+                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, columns: [{ width: 80 }, {}], onClick: () => this.onCommandSelect() }
                     ]
                 }
             ]
         });
+        if (!this.window) {
+            throw new Error();
+        }
         this.refreshSequences();
-        return this.window;
     }
 
     performLayout() {
@@ -133,11 +134,6 @@ class TitleEditorWindow {
                 button.y = this.window.height - 32;
                 button.isDisabled = true;
             }
-        }
-
-        const skipToButton = this.window.findWidget('btn-skipto');
-        if (skipToButton) {
-            skipToButton.isDisabled = true;
         }
 
         const listView = this.window.findWidget('list');
@@ -272,6 +268,68 @@ class TitleEditorWindow {
 
     }
 
+    onDeleteCommand() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            const listView = this.window.findWidget<ListView>('list');
+            if (listView) {
+                const selectedIndex = listView.selectedCell?.row;
+                if (selectedIndex !== undefined) {
+                    let commands = titleSequence.commands;
+                    commands.splice(selectedIndex, 1);
+                    titleSequence.commands = commands;
+                    this.refreshCommands();
+                }
+            }
+        }
+    }
+
+    onMoveCommandUp() {
+        return this.onMoveCommand(-1);
+    }
+
+    onMoveCommandDown() {
+        return this.onMoveCommand(1);
+    }
+
+    onMoveCommand(delta: -1 | 1) {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            const selectedIndex = this.getSelectedCommandIndex();
+            if (selectedIndex !== undefined) {
+                let commands = titleSequence.commands;
+                const otherIndex = selectedIndex + delta;
+                if (otherIndex >= 0 && otherIndex < commands.length) {
+                    const tmp = commands[otherIndex];
+                    commands[otherIndex] = commands[selectedIndex];
+                    commands[selectedIndex] = tmp;
+                    titleSequence.commands = commands;
+                    this.setSelectedCommandIndex(otherIndex);
+                    this.refreshCommands();
+                }
+            }
+        }
+    }
+
+    onCommandSelect() {
+        this.refreshCommandButtons();
+    }
+
+    getSelectedCommandIndex() {
+        const listView = this.window.findWidget<ListView>('list');
+        if (listView) {
+            return listView.selectedCell?.row;
+        }
+        return undefined;
+    }
+
+    setSelectedCommandIndex(index: number) {
+        const listView = this.window.findWidget<ListView>('list');
+        if (listView) {
+            listView.selectedCell = { row: index, column: 0 };
+        }
+    }
+
     refreshSequences(): void {
         const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
         if (seqDropdown) {
@@ -361,52 +419,28 @@ class TitleEditorWindow {
         }
     }
 
-    static getCommandArgument(parks: TitleSequencePark[], command: TitleSequenceCommand) {
-        switch (command.type) {
+    static getCommandArgument(parks: TitleSequencePark[], cmd: TitleSequenceCommand) {
+        switch (cmd.type) {
             case 'load':
-                {
-                    const c = <LoadTitleSequenceCommand>command;
-                    if (c.index >= 0 && c.index < parks.length) {
-                        return parks[c.index].fileName;
-                    } else {
-                        return 'No save selected';
-                    }
+                if (cmd.index >= 0 && cmd.index < parks.length) {
+                    return parks[cmd.index].fileName;
+                } else {
+                    return 'No save selected';
                 }
             case 'location':
-                {
-                    const c = <LocationTitleSequenceCommand>command;
-                    return `${c.x}, ${c.y}`;
-                }
+                return `${cmd.x}, ${cmd.y}`;
             case 'rotate':
-                {
-                    const c = <RotateTitleSequenceCommand>command;
-                    return c.rotations.toString();
-                }
+                return cmd.rotations.toString();
             case 'zoom':
-                {
-                    const c = <ZoomTitleSequenceCommand>command;
-                    return c.zoom.toString();
-                }
+                return cmd.zoom.toString();
             case 'follow':
-                {
-                    const c = <FollowTitleSequenceCommand>command;
-                    return c.id.toString();
-                }
+                return cmd.id === null ? "<none>" : cmd.id.toString();
             case 'speed':
-                {
-                    const c = <SpeedTitleSequenceCommand>command;
-                    return c.speed.toString();
-                }
+                return cmd.speed.toString();
             case 'wait':
-                {
-                    const c = <WaitTitleSequenceCommand>command;
-                    return c.duration.toString();
-                }
+                return cmd.duration.toString();
             case 'loadsc':
-                {
-                    const c = <LoadScenarioTitleSequenceCommand>command;
-                    return c.scenario;
-                }
+                return cmd.scenario;
         }
         return "";
     }
@@ -430,6 +464,42 @@ class TitleEditorWindow {
                 listView.items = [];
             }
         }
+
+        this.refreshCommandButtons();
+    }
+
+    refreshCommandButtons() {
+        const insertButton = this.window.findWidget<ButtonWidget>('btn-insert');
+        const editButton = this.window.findWidget<ButtonWidget>('btn-edit');
+        const deleteButton = this.window.findWidget<ButtonWidget>('btn-delete');
+        const skipToButton = this.window.findWidget<ButtonWidget>('btn-skipto');
+        const moveUpButton = this.window.findWidget<ButtonWidget>('btn-moveup');
+        const moveDownButton = this.window.findWidget<ButtonWidget>('btn-movedown');
+
+        const titleSequence = this.getSelectedTitleSequence();
+        const isReadOnly = titleSequence?.isReadOnly !== false;
+        const selectedIndex = this.getSelectedCommandIndex();
+        const numCommands = titleSequence?.commands.length || 0;
+
+        if (insertButton) {
+            insertButton.isDisabled = isReadOnly;
+        }
+
+        for (const btn of [editButton, deleteButton]) {
+            btn.isDisabled = isReadOnly || selectedIndex === undefined;
+        }
+
+        if (skipToButton) {
+            skipToButton.isDisabled = selectedIndex === undefined;
+        }
+
+        if (moveUpButton) {
+            moveUpButton.isDisabled = isReadOnly || selectedIndex === undefined || selectedIndex <= 0;
+        }
+
+        if (moveDownButton) {
+            moveDownButton.isDisabled = isReadOnly || selectedIndex === undefined || selectedIndex >= numCommands - 1;
+        }
     }
 
     getUniqueFileName(path: string) {
@@ -449,9 +519,11 @@ class TitleEditorWindow {
     fileNameExists(fileName: string) {
         fileName = fileName.toLowerCase();
         const titleSequence = this.getSelectedTitleSequence();
-        for (const park of titleSequence.parks) {
-            if (park.fileName.toLowerCase() === fileName) {
-                return true;
+        if (titleSequence) {
+            for (const park of titleSequence.parks) {
+                if (park.fileName.toLowerCase() === fileName) {
+                    return true;
+                }
             }
         }
         return false;
