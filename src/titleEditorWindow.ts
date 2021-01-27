@@ -98,7 +98,7 @@ class TitleEditorWindow {
                         <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
                         <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
 
-                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true }
+                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, onClick: () => this.onParkSelect() }
                     ]
                 },
                 {
@@ -270,7 +270,14 @@ class TitleEditorWindow {
     }
 
     onLoadParkClick() {
+        const park = this.getSelectedPark();
+        if (park) {
+            park.load();
+        }
+    }
 
+    onParkSelect() {
+        this.refreshParkButtons();
     }
 
     onInsertCommand() {
@@ -465,16 +472,33 @@ class TitleEditorWindow {
             }
         }
 
-        let isReadOnly = true;
-        if (titleSequence) {
-            isReadOnly = titleSequence.isReadOnly;
+        this.refreshParkButtons();
+    }
+
+    refreshParkButtons() {
+        const titleSequence = this.getSelectedTitleSequence();
+        const parkSelected = this.getSelectedPark() != null;
+        const isReadOnly = !titleSequence || titleSequence.isReadOnly;
+
+        const addButton = this.window.findWidget<ButtonWidget>('btn-add');
+        const renameButton = this.window.findWidget<ButtonWidget>('btn-rename');
+        const removeButton = this.window.findWidget<ButtonWidget>('btn-remove');
+        const loadButton = this.window.findWidget<ButtonWidget>('btn-load');
+
+        if (addButton) {
+            addButton.isDisabled = isReadOnly
         }
 
-        for (const name of ['btn-add', 'btn-rename', 'btn-remove', 'btn-load']) {
-            const btn = this.window.findWidget<ButtonWidget>(name);
-            if (btn) {
-                btn.isDisabled = isReadOnly;
-            }
+        if (removeButton) {
+            removeButton.isDisabled = isReadOnly || !parkSelected;
+        }
+
+        if (renameButton) {
+            renameButton.isDisabled = isReadOnly || !parkSelected;
+        }
+
+        if (loadButton) {
+            loadButton.isDisabled = !parkSelected;
         }
     }
 
