@@ -50,10 +50,12 @@ type CommandWindowCallback = (command: TitleSequenceCommand) => void;
 class CommandEditorWindow {
 
     static readonly className = 'title-sequence-editor-command';
+    static readonly selectEntityToolName = 'title-sequence-editor-select-entity';
 
     window: Window;
     parks: string[];
     callback: CommandWindowCallback;
+    entityId: number | null = null;
 
     constructor(pos: ScreenCoordsXY, parks: string[], command: TitleSequenceCommand | null, callback: CommandWindowCallback) {
         const commands = CommandDescriptors.map(x => getString(x.name));
@@ -73,15 +75,15 @@ class CommandEditorWindow {
                 <LabelWidget>{ type: "label", x: 16, y: 56, width: 168, height: 12, name: 'label-desc' },
 
                 <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 168, height: 12, name: 'textbox-full', maxLength: 6 },
-                <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 81, height: 12, name: 'textbox-x', maxLength: 4 },
-                <TextBoxWidget>{ type: "textbox", x: 103, y: 70, width: 81, height: 12, name: 'textbox-y', maxLength: 4 },
+                <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 81, height: 12, name: 'textbox-x', maxLength: 3 },
+                <TextBoxWidget>{ type: "textbox", x: 103, y: 70, width: 81, height: 12, name: 'textbox-y', maxLength: 3 },
 
                 <DropdownWidget>{ type: "dropdown", x: 16, y: 70, width: 168, height: 12, items: [], selectedIndex: 0, name: 'dropdown-arg' },
 
                 <ButtonWidget>{ type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
                 <ButtonWidget>{ type: "button", x: 112, y: 56, width: 72, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
-                <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-sprite' },
+                <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
 
                 <ButtonWidget>{ type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
                 <ButtonWidget>{ type: "button", x: 120, y: 99, width: 71, height: 14, onClick: () => this.onCancelClick(), text: getString('STR_CANCEL') },
@@ -132,6 +134,64 @@ class CommandEditorWindow {
         }
     }
 
+    private static getEntityText(id: number) {
+        const entity = map.getEntity(id);
+        if (entity) {
+            switch (entity.type) {
+                case 'balloon':
+                    return 'Balloon';
+                case 'car':
+                    {
+                        const rideId = (<Car>entity).ride;
+                        const ride = map.getRide(rideId);
+                        if (ride) {
+                            return `Car (${ride.name})`;
+                        } else {
+                            return 'Car';
+                        }
+                    }
+                case 'duck':
+                    return 'Duck';
+                case 'litter':
+                    return 'Litter';
+                case 'peep':
+                    return (<Peep>entity).name;
+                default:
+                    return entity.type;
+            }
+        } else {
+            return '<unknown>';
+        }
+    }
+
+    private onSelectEntity() {
+        const toolId = CommandEditorWindow.selectEntityToolName;
+        if (ui.tool?.id === toolId) {
+            ui.tool.cancel();
+        } else {
+            ui.activateTool({
+                id: toolId,
+                cursor: 'cross_hair',
+                onStart: () => {
+                    const widgets = this.getWidgets();
+                    widgets.selectEntityButton.isPressed = true;
+                },
+                onDown: e => {
+                    const widgets = this.getWidgets();
+                    if (e.entityId) {
+                        this.entityId = e.entityId;
+                        widgets.fullTextBox.text = CommandEditorWindow.getEntityText(e.entityId);
+                        ui.tool?.cancel();
+                    }
+                },
+                onFinish: () => {
+                    const widgets = this.getWidgets();
+                    widgets.selectEntityButton.isPressed = false;
+                }
+            });
+        }
+    }
+
     onCommandChange() {
         const id = this.getCommandId();
         if (id !== undefined) {
@@ -146,7 +206,7 @@ class CommandEditorWindow {
             descLabel: w.findWidget<LabelWidget>('label-desc'),
             getLocationButton: w.findWidget<ButtonWidget>('btn-get-location'),
             selectScenarioButton: w.findWidget<ButtonWidget>('btn-select-scenario'),
-            selectSpriteButton: w.findWidget<ButtonWidget>('btn-select-sprite'),
+            selectEntityButton: w.findWidget<ButtonWidget>('btn-select-entity'),
             argumentDropdown: w.findWidget<DropdownWidget>('dropdown-arg'),
             xTextBox: w.findWidget<TextBoxWidget>('textbox-x'),
             yTextBox: w.findWidget<TextBoxWidget>('textbox-y'),
@@ -216,7 +276,7 @@ class CommandEditorWindow {
         setVisibility(widgets.argumentDropdown, ['load', 'speed']);
         setVisibility(widgets.getLocationButton, ['location', 'zoom']);
         setVisibility(widgets.selectScenarioButton, ['loadsc']);
-        setVisibility(widgets.selectSpriteButton, ['follow']);
+        setVisibility(widgets.selectEntityButton, ['follow']);
         setVisibility(widgets.xTextBox, ['location']);
         setVisibility(widgets.yTextBox, ['location']);
         setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'follow', 'wait']);
