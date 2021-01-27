@@ -81,7 +81,7 @@ class CommandEditorWindow {
                 <DropdownWidget>{ type: "dropdown", x: 16, y: 70, width: 168, height: 12, items: [], selectedIndex: 0, name: 'dropdown-arg' },
 
                 <ButtonWidget>{ type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
-                <ButtonWidget>{ type: "button", x: 112, y: 56, width: 72, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
+                <ButtonWidget>{ type: "button", x: 112, y: 56, width: 72, height: 12, onClick: () => this.onSelectScenario(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
                 <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
 
@@ -192,6 +192,15 @@ class CommandEditorWindow {
         }
     }
 
+    onSelectScenario() {
+        ui.showScenarioSelect({
+            callback: scenario => {
+                const widgets = this.getWidgets();
+                widgets.fullTextBox.text = scenario.internalName;
+            }
+        });
+    }
+
     onCommandChange() {
         const id = this.getCommandId();
         if (id !== undefined) {
@@ -232,7 +241,7 @@ class CommandEditorWindow {
                 widgets.argumentDropdown.selectedIndex = 0;
                 break;
             case 'loadsc':
-                widgets.fullTextBox.text = getString('STR_TITLE_COMMAND_EDITOR_NO_SCENARIO_SELECTED');
+                widgets.fullTextBox.text = '';
                 widgets.fullTextBox.isDisabled = true;
                 break;
             case 'location':
@@ -305,7 +314,7 @@ class CommandEditorWindow {
             case 'loadsc':
                 return {
                     type: id,
-                    scenario: ''
+                    scenario: widgets.fullTextBox.text
                 };
             case 'location':
                 return {
@@ -354,6 +363,9 @@ class CommandEditorWindow {
             case 'load':
                 widgets.argumentDropdown.selectedIndex = command.index;
                 break;
+            case 'loadsc':
+                widgets.fullTextBox.text = command.scenario;
+                break;
             case 'location':
                 widgets.xTextBox.text = command.x.toString();
                 widgets.yTextBox.text = command.y.toString();
@@ -368,6 +380,10 @@ class CommandEditorWindow {
                 widgets.fullTextBox.text = command.speed.toString();
                 break;
             case 'follow':
+                if (command.id != null) {
+                    this.entityId = command.id;
+                    widgets.fullTextBox.text = CommandEditorWindow.getEntityText(command.id);
+                }
                 break;
             case 'wait':
                 widgets.fullTextBox.text = command.duration.toString();
