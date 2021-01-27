@@ -45,16 +45,17 @@ function getCommandDescriptor(id: CommandId) {
     throw new Error(`command id (${id}) not present in descriptor table`);
 }
 
-type InsertCommandCallback = (command: TitleSequenceCommand) => void;
+type CommandWindowCallback = (command: TitleSequenceCommand) => void;
 
 class CommandEditorWindow {
 
     static readonly className = 'title-sequence-editor-command';
 
     window: Window;
-    callback: InsertCommandCallback;
+    parks: string[];
+    callback: CommandWindowCallback;
 
-    constructor(pos: ScreenCoordsXY, command: TitleSequenceCommand | null, callback: InsertCommandCallback) {
+    constructor(pos: ScreenCoordsXY, parks: string[], command: TitleSequenceCommand | null, callback: CommandWindowCallback) {
         const commands = CommandDescriptors.map(x => getString(x.name));
         const width = 200;
         const height = 120;
@@ -77,7 +78,7 @@ class CommandEditorWindow {
 
                 <DropdownWidget>{ type: "dropdown", x: 16, y: 70, width: 168, height: 12, items: [], selectedIndex: 0, name: 'dropdown-arg' },
 
-                <ButtonWidget>{ type: "button", x: 103, y: 56, width: 81, height: 12, onClick: this.onGetClick, text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
+                <ButtonWidget>{ type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
                 <ButtonWidget>{ type: "button", x: 112, y: 56, width: 72, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
                 <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: function () { }, text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-sprite' },
@@ -89,6 +90,7 @@ class CommandEditorWindow {
         if (!this.window) {
             throw new Error();
         }
+        this.parks = parks;
         this.callback = callback;
 
         if (command) {
@@ -102,8 +104,11 @@ class CommandEditorWindow {
     }
 
     private onOkClick() {
+        const command = this.getCommand();
         this.window.close();
-        this.callback(this.getCommand());
+        if (command) {
+            this.callback(command);
+        }
     }
 
     private onCancelClick() {
@@ -113,21 +118,16 @@ class CommandEditorWindow {
     private onGetClick() {
         const id = this.getCommandId();
         if (id !== undefined) {
-            var command = getCommandDescriptor(id);
+            const widgets = this.getWidgets();
+            const command = getCommandDescriptor(id);
             if (command.id === 'location') {
                 var pos = ui.mainViewport.getCentrePosition();
                 pos.x = Math.round(pos.x / 32);
                 pos.y = Math.round(pos.y / 32);
-
-                var xTextBox = this.window.findWidget<TextBoxWidget>('textbox-x');
-                if (xTextBox) {
-                    xTextBox.text = pos.x.toString();
-                }
-
-                var yTextBox = this.window.findWidget<TextBoxWidget>('textbox-y');
-                if (yTextBox) {
-                    yTextBox.text = pos.y.toString();
-                }
+                widgets.xTextBox.text = pos.x.toString();
+                widgets.yTextBox.text = pos.y.toString();
+            } else if (command.id === 'zoom') {
+                widgets.fullTextBox.text = ui.mainViewport.zoom.toString();
             }
         }
     }
@@ -139,77 +139,68 @@ class CommandEditorWindow {
         }
     }
 
-    initialiseWidgetsForCommand(id: CommandId) {
-        var command = getCommandDescriptor(id);
-
+    getWidgets() {
         const w = this.window;
-        const typeDropdown = this.window.findWidget<DropdownWidget>('dropdown-type');
-        const descLabel = w.findWidget<LabelWidget>('label-desc');
-        const getLocationButton = w.findWidget<ButtonWidget>('btn-get-location');
-        const selectScenarioButton = w.findWidget<ButtonWidget>('btn-select-scenario');
-        const selectSpriteButton = w.findWidget<ButtonWidget>('btn-select-sprite');
-        const argumentDropdown = w.findWidget<DropdownWidget>('dropdown-arg');
-        const xTextBox = w.findWidget<TextBoxWidget>('textbox-x');
-        const yTextBox = w.findWidget<TextBoxWidget>('textbox-y');
-        const fullTextBox = w.findWidget<TextBoxWidget>('textbox-full');
+        return {
+            typeDropdown: w.findWidget<DropdownWidget>('dropdown-type'),
+            descLabel: w.findWidget<LabelWidget>('label-desc'),
+            getLocationButton: w.findWidget<ButtonWidget>('btn-get-location'),
+            selectScenarioButton: w.findWidget<ButtonWidget>('btn-select-scenario'),
+            selectSpriteButton: w.findWidget<ButtonWidget>('btn-select-sprite'),
+            argumentDropdown: w.findWidget<DropdownWidget>('dropdown-arg'),
+            xTextBox: w.findWidget<TextBoxWidget>('textbox-x'),
+            yTextBox: w.findWidget<TextBoxWidget>('textbox-y'),
+            fullTextBox: w.findWidget<TextBoxWidget>('textbox-full')
+        };
+    }
 
-        if (typeDropdown) {
-            typeDropdown.selectedIndex = CommandDescriptors.indexOf(command);
+    initialiseWidgetsForCommand(id: CommandId) {
+        const widgets = this.getWidgets();
+        const command = getCommandDescriptor(id);
+
+        if (widgets.typeDropdown) {
+            widgets.typeDropdown.selectedIndex = CommandDescriptors.indexOf(command);
         }
 
-        if (descLabel) {
-            descLabel.text = command.desc == '' ? '' : getString(command.desc);
+        if (widgets.descLabel) {
+            widgets.descLabel.text = command.desc == '' ? '' : getString(command.desc);
         }
 
         switch (command.id) {
             case 'load':
-                if (fullTextBox) {
-                    fullTextBox.text = getString('STR_TITLE_COMMAND_EDITOR_NO_SAVE_SELECTED');
-                    fullTextBox.isDisabled = true;
-                }
+                widgets.argumentDropdown.items = this.parks;
+                widgets.argumentDropdown.selectedIndex = 0;
                 break;
             case 'loadsc':
-                if (fullTextBox) {
-                    fullTextBox.text = getString('STR_TITLE_COMMAND_EDITOR_NO_SCENARIO_SELECTED');
-                    fullTextBox.isDisabled = true;
-                }
+                widgets.fullTextBox.text = getString('STR_TITLE_COMMAND_EDITOR_NO_SCENARIO_SELECTED');
+                widgets.fullTextBox.isDisabled = true;
                 break;
             case 'location':
-                if (xTextBox) {
-                    xTextBox.text = '0';
-                    xTextBox.maxLength = 2;
-                }
-                if (yTextBox) {
-                    yTextBox.text = '0';
-                    yTextBox.maxLength = 2;
-                }
+                widgets.xTextBox.text = '0';
+                widgets.yTextBox.text = '0';
                 break;
             case 'rotate':
-                if (fullTextBox) {
-                    fullTextBox.text = '1';
-                    fullTextBox.maxLength = 2;
-                    fullTextBox.isDisabled = false;
-                }
+                widgets.fullTextBox.text = '1';
+                widgets.fullTextBox.maxLength = 2;
+                widgets.fullTextBox.isDisabled = false;
                 break;
             case 'zoom':
-                if (fullTextBox) {
-                    fullTextBox.text = '0';
-                    fullTextBox.maxLength = 2;
-                    fullTextBox.isDisabled = false;
-                }
+                widgets.fullTextBox.text = '0';
+                widgets.fullTextBox.maxLength = 2;
+                widgets.fullTextBox.isDisabled = false;
                 break;
             case 'speed':
-                if (argumentDropdown) {
-                    argumentDropdown.items = speedNames.map(x => getString(x));
-                    argumentDropdown.selectedIndex = 0;
-                }
+                widgets.argumentDropdown.items = speedNames.map(x => getString(x));
+                widgets.argumentDropdown.selectedIndex = 0;
+                break;
+            case 'follow':
+                widgets.fullTextBox.text = '<none>';
+                widgets.fullTextBox.isDisabled = true;
                 break;
             case 'wait':
-                if (fullTextBox) {
-                    fullTextBox.text = '10000';
-                    fullTextBox.maxLength = 6;
-                    fullTextBox.isDisabled = false;
-                }
+                widgets.fullTextBox.text = '10000';
+                widgets.fullTextBox.maxLength = 6;
+                widgets.fullTextBox.isDisabled = false;
                 break;
         }
 
@@ -222,13 +213,13 @@ class CommandEditorWindow {
             }
         };
 
-        setVisibility(argumentDropdown, ['speed']);
-        setVisibility(getLocationButton, ['location', 'zoom']);
-        setVisibility(selectScenarioButton, ['loadsc']);
-        setVisibility(selectSpriteButton, ['follow']);
-        setVisibility(xTextBox, ['location']);
-        setVisibility(yTextBox, ['location']);
-        setVisibility(fullTextBox, ['load', 'loadsc', 'rotate', 'zoom', 'wait']);
+        setVisibility(widgets.argumentDropdown, ['load', 'speed']);
+        setVisibility(widgets.getLocationButton, ['location', 'zoom']);
+        setVisibility(widgets.selectScenarioButton, ['loadsc']);
+        setVisibility(widgets.selectSpriteButton, ['follow']);
+        setVisibility(widgets.xTextBox, ['location']);
+        setVisibility(widgets.yTextBox, ['location']);
+        setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'follow', 'wait']);
     }
 
     getCommandId() {
@@ -242,26 +233,93 @@ class CommandEditorWindow {
         return undefined;
     }
 
-    getCommand(): TitleSequenceCommand {
-        return {
-            type: 'restart'
-        };
+    getCommand() {
+        const widgets = this.getWidgets();
+        const id = this.getCommandId()
+        switch (id) {
+            case 'load':
+                return {
+                    type: id,
+                    index: widgets.argumentDropdown.selectedIndex
+                };
+            case 'loadsc':
+                return {
+                    type: id,
+                    scenario: ''
+                };
+            case 'location':
+                return {
+                    type: id,
+                    x: parseInt(widgets.xTextBox.text),
+                    y: parseInt(widgets.yTextBox.text)
+                };
+            case 'rotate':
+                return {
+                    type: id,
+                    rotations: parseInt(widgets.fullTextBox.text)
+                };
+            case 'zoom':
+                return {
+                    type: id,
+                    zoom: parseInt(widgets.fullTextBox.text)
+                };
+            case 'speed':
+                return {
+                    type: id,
+                    speed: widgets.argumentDropdown.selectedIndex
+                };
+            case 'follow':
+                return {
+                    type: id,
+                    id: null
+                };
+            case 'wait':
+                return {
+                    type: id,
+                    duration: parseInt(widgets.fullTextBox.text)
+                };
+            case 'restart':
+            case 'end':
+                return {
+                    type: id
+                };
+        }
+        return undefined;
     }
 
     setCommand(command: TitleSequenceCommand) {
         this.initialiseWidgetsForCommand(command.type);
+        const widgets = this.getWidgets();
         switch (command.type) {
-            case 'restart':
-            case 'end':
+            case 'load':
+                widgets.argumentDropdown.selectedIndex = command.index;
+                break;
+            case 'location':
+                widgets.xTextBox.text = command.x.toString();
+                widgets.yTextBox.text = command.y.toString();
+                break;
+            case 'rotate':
+                widgets.fullTextBox.text = command.rotations.toString();
+                break;
+            case 'zoom':
+                widgets.fullTextBox.text = command.zoom.toString();
+                break;
+            case 'speed':
+                widgets.fullTextBox.text = command.speed.toString();
+                break;
+            case 'follow':
+                break;
+            case 'wait':
+                widgets.fullTextBox.text = command.duration.toString();
                 break;
         }
     }
 
-    static getOrOpen(pos: ScreenCoordsXY, command: TitleSequenceCommand | null, callback: InsertCommandCallback) {
+    static getOrOpen(pos: ScreenCoordsXY, parks: string[], command: TitleSequenceCommand | null, callback: CommandWindowCallback) {
         var w = ui.getWindow(CommandEditorWindow.className);
         if (w) {
             w.close();
         }
-        return new CommandEditorWindow(pos, command, callback);
+        return new CommandEditorWindow(pos, parks, command, callback);
     }
 }

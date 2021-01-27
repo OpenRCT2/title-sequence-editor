@@ -274,11 +274,7 @@ class TitleEditorWindow {
     }
 
     onInsertCommand() {
-        const pos = {
-            x: this.window.x + (this.window.width / 2),
-            y: this.window.y + (this.window.height / 2)
-        };
-        CommandEditorWindow.getOrOpen(pos, null, command => {
+        this.openCommandWindow(null, command => {
             const titleSequence = this.getSelectedTitleSequence();
             if (titleSequence) {
                 let commands = titleSequence.commands;
@@ -308,12 +304,27 @@ class TitleEditorWindow {
                     y: this.window.y + (this.window.height / 2)
                 };
                 const command = titleSequence.commands[selectedIndex];
-                CommandEditorWindow.getOrOpen(pos, command, command => {
-                    titleSequence.commands[selectedIndex] = command;
+                this.openCommandWindow(command, command => {
+                    const commands = titleSequence.commands;
+                    commands[selectedIndex] = command;
+                    titleSequence.commands = commands;
                     this.refreshCommands();
                 });
             }
         }
+    }
+
+    openCommandWindow(command: TitleSequenceCommand | null, callback: CommandWindowCallback) {
+        const pos = {
+            x: this.window.x + (this.window.width / 2),
+            y: this.window.y + (this.window.height / 2)
+        };
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            const parks = titleSequence.parks.map(x => x.fileName);
+            return CommandEditorWindow.getOrOpen(pos, parks, command, callback);
+        }
+        return undefined;
     }
 
     onDeleteCommand() {

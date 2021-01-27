@@ -11,6 +11,9 @@ let main = function () {
         return;
     }
 
+    // DEBUG:
+    ui.closeAllWindows();
+
     TitleEditorWindow.getOrOpen();
 };
 
