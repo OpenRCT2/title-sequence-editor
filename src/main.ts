@@ -1,6 +1,6 @@
 /// <reference path="C:/Users/Ted/Documents/GitHub/openrct2/distribution/openrct2.d.ts" />
 
-let main = function () {
+const main = () => {
     if (typeof ui === 'undefined') {
         console.log("Plugin not available on headless mode.");
         return;
@@ -11,10 +11,13 @@ let main = function () {
         return;
     }
 
-    // DEBUG:
-    ui.closeAllWindows();
+    ui.registerMenuItem('Title Sequence Editor', () => {
+        TitleEditorWindow.getOrOpen();
+    });
 
     TitleEditorWindow.getOrOpen();
+    // ui.closeAllWindows();
+    // CommandEditorWindow.getOrOpen({ x: ui.width / 2, y: ui.height / 2 }, [], null, () => { });
 };
 
 registerPlugin({

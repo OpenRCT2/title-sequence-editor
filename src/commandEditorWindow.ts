@@ -51,6 +51,7 @@ class CommandEditorWindow {
 
     static readonly className = 'title-sequence-editor-command';
     static readonly selectEntityToolName = 'title-sequence-editor-select-entity';
+    static readonly selectLocationToolName = 'title-sequence-editor-select-location';
 
     window: Window;
     parks: string[];
@@ -70,24 +71,26 @@ class CommandEditorWindow {
             width: width,
             height: height,
             widgets: [
-                <LabelWidget>{ type: "label", x: 16, y: 18, width: 168, height: 12, text: getString('STR_TITLE_COMMAND_EDITOR_COMMAND_LABEL') },
-                <DropdownWidget>{ type: "dropdown", x: 16, y: 32, width: 168, height: 12, items: commands, selectedIndex: 0, onChange: index => this.onCommandChange(), name: 'dropdown-type' },
-                <LabelWidget>{ type: "label", x: 16, y: 56, width: 168, height: 12, name: 'label-desc' },
+                { type: "label", x: 16, y: 18, width: 168, height: 12, text: getString('STR_TITLE_COMMAND_EDITOR_COMMAND_LABEL') },
+                { type: "dropdown", x: 16, y: 32, width: 168, height: 12, items: commands, selectedIndex: 0, onChange: index => this.onCommandChange(), name: 'dropdown-type' },
+                { type: "label", x: 16, y: 56, width: 168, height: 12, name: 'label-desc' },
 
-                <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 168, height: 12, name: 'textbox-full', maxLength: 6 },
-                <TextBoxWidget>{ type: "textbox", x: 16, y: 70, width: 81, height: 12, name: 'textbox-x', maxLength: 3 },
-                <TextBoxWidget>{ type: "textbox", x: 103, y: 70, width: 81, height: 12, name: 'textbox-y', maxLength: 3 },
+                { type: "textbox", x: 16, y: 70, width: 168, height: 12, name: 'textbox-full', maxLength: 6 },
+                { type: "textbox", x: 16, y: 70, width: 81, height: 12, name: 'textbox-x', maxLength: 3 },
+                { type: "textbox", x: 103, y: 70, width: 81, height: 12, name: 'textbox-y', maxLength: 3 },
 
-                <DropdownWidget>{ type: "dropdown", x: 16, y: 70, width: 168, height: 12, items: [], selectedIndex: 0, name: 'dropdown-arg' },
+                { type: "dropdown", x: 16, y: 70, width: 168, height: 12, items: [], selectedIndex: 0, name: 'dropdown-arg' },
 
-                <ButtonWidget>{ type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
-                <ButtonWidget>{ type: "button", x: 112, y: 56, width: 72, height: 12, onClick: () => this.onSelectScenario(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
+                { type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
+                { type: "button", x: 112, y: 56, width: 72, height: 12, onClick: () => this.onSelectScenario(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
-                <ButtonWidget>{ type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
+                { type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
+                { type: "viewport", x: 16, y: 70, width: 168, height: 24, name: 'viewport' },
 
-                <ButtonWidget>{ type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
-                <ButtonWidget>{ type: "button", x: 120, y: 99, width: 71, height: 14, onClick: () => this.onCancelClick(), text: getString('STR_CANCEL') },
-            ]
+                { type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
+                { type: "button", x: 120, y: 99, width: 71, height: 14, onClick: () => this.onCancelClick(), text: getString('STR_CANCEL') },
+            ],
+            onUpdate: () => this.onUpdate()
         });
         if (!this.window) {
             throw new Error();
@@ -123,44 +126,45 @@ class CommandEditorWindow {
             const widgets = this.getWidgets();
             const command = getCommandDescriptor(id);
             if (command.id === 'location') {
-                var pos = ui.mainViewport.getCentrePosition();
-                pos.x = Math.round(pos.x / 32);
-                pos.y = Math.round(pos.y / 32);
-                widgets.xTextBox.text = pos.x.toString();
-                widgets.yTextBox.text = pos.y.toString();
+                const toolId = CommandEditorWindow.selectLocationToolName;
+                if (ui.tool?.id === toolId) {
+                    ui.tool.cancel();
+                } else {
+                    ui.activateTool({
+                        id: toolId,
+                        cursor: 'cross_hair',
+                        onStart: () => {
+                            const widgets = this.getWidgets();
+                            widgets.getLocationButton.isPressed = true;
+                            ui.tileSelection.tiles = [];
+                        },
+                        onMove: e => {
+                            const coords = e.mapCoords;
+                            if (coords) {
+                                ui.tileSelection.tiles = [coords];
+                            } else {
+                                ui.tileSelection.tiles = [];
+                            }
+                        },
+                        onDown: e => {
+                            const coords = e.mapCoords;
+                            if (coords) {
+                                const x = Math.round(coords.x / 32);
+                                const y = Math.round(coords.y / 32);
+                                widgets.xTextBox.text = x.toString();
+                                widgets.yTextBox.text = y.toString();
+                                ui.mainViewport.moveTo(coords);
+                            }
+                        },
+                        onFinish: () => {
+                            const widgets = this.getWidgets();
+                            widgets.getLocationButton.isPressed = false;
+                        }
+                    });
+                }
             } else if (command.id === 'zoom') {
                 widgets.fullTextBox.text = ui.mainViewport.zoom.toString();
             }
-        }
-    }
-
-    private static getEntityText(id: number) {
-        const entity = map.getEntity(id);
-        if (entity) {
-            switch (entity.type) {
-                case 'balloon':
-                    return 'Balloon';
-                case 'car':
-                    {
-                        const rideId = (<Car>entity).ride;
-                        const ride = map.getRide(rideId);
-                        if (ride) {
-                            return `Car (${ride.name})`;
-                        } else {
-                            return 'Car';
-                        }
-                    }
-                case 'duck':
-                    return 'Duck';
-                case 'litter':
-                    return 'Litter';
-                case 'peep':
-                    return (<Peep>entity).name;
-                default:
-                    return entity.type;
-            }
-        } else {
-            return '<unknown>';
         }
     }
 
@@ -177,11 +181,8 @@ class CommandEditorWindow {
                     widgets.selectEntityButton.isPressed = true;
                 },
                 onDown: e => {
-                    const widgets = this.getWidgets();
                     if (e.entityId) {
                         this.entityId = e.entityId;
-                        widgets.fullTextBox.text = CommandEditorWindow.getEntityText(e.entityId);
-                        ui.tool?.cancel();
                     }
                 },
                 onFinish: () => {
@@ -208,6 +209,28 @@ class CommandEditorWindow {
         }
     }
 
+    onUpdate() {
+        if (this.getCommandId() == 'follow') {
+            const widgets = this.getWidgets();
+            widgets.viewport.isVisible = false;
+            if (this.entityId) {
+                const entity = map.getEntity(this.entityId);
+                if (entity) {
+                    widgets.viewport.isVisible = true;
+                    const viewport = widgets.viewport.viewport;
+                    if (viewport) {
+                        viewport.moveTo({
+                            x: entity.x,
+                            y: entity.y,
+                            z: entity.z
+                        });
+                    }
+                } else {
+                }
+            }
+        }
+    }
+
     getWidgets() {
         const w = this.window;
         return {
@@ -219,7 +242,8 @@ class CommandEditorWindow {
             argumentDropdown: w.findWidget<DropdownWidget>('dropdown-arg'),
             xTextBox: w.findWidget<TextBoxWidget>('textbox-x'),
             yTextBox: w.findWidget<TextBoxWidget>('textbox-y'),
-            fullTextBox: w.findWidget<TextBoxWidget>('textbox-full')
+            fullTextBox: w.findWidget<TextBoxWidget>('textbox-full'),
+            viewport: w.findWidget<ViewportWidget>('viewport')
         };
     }
 
@@ -265,6 +289,7 @@ class CommandEditorWindow {
             case 'follow':
                 widgets.fullTextBox.text = '<none>';
                 widgets.fullTextBox.isDisabled = true;
+                widgets.viewport.isVisible = false;
                 break;
             case 'wait':
                 widgets.fullTextBox.text = '10000';
@@ -288,64 +313,65 @@ class CommandEditorWindow {
         setVisibility(widgets.selectEntityButton, ['follow']);
         setVisibility(widgets.xTextBox, ['location']);
         setVisibility(widgets.yTextBox, ['location']);
-        setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'follow', 'wait']);
+        setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'wait']);
+        setVisibility(widgets.viewport, ['follow']);
     }
 
     getCommandId() {
         const typeDropdown = this.window.findWidget<DropdownWidget>('dropdown-type');
         if (typeDropdown) {
             const index = typeDropdown.selectedIndex;
-            if (index >= 0 && index < CommandDescriptors.length) {
+            if (index !== undefined && index >= 0 && index < CommandDescriptors.length) {
                 return CommandDescriptors[index].id;
             }
         }
         return undefined;
     }
 
-    getCommand() {
+    getCommand(): TitleSequenceCommand | undefined {
         const widgets = this.getWidgets();
         const id = this.getCommandId()
         switch (id) {
             case 'load':
                 return {
                     type: id,
-                    index: widgets.argumentDropdown.selectedIndex
+                    index: widgets.argumentDropdown.selectedIndex || 0
                 };
             case 'loadsc':
                 return {
                     type: id,
-                    scenario: widgets.fullTextBox.text
+                    scenario: widgets.fullTextBox.text || ''
                 };
             case 'location':
                 return {
                     type: id,
-                    x: parseInt(widgets.xTextBox.text),
-                    y: parseInt(widgets.yTextBox.text)
+                    x: parseInt(widgets.xTextBox.text || ''),
+                    y: parseInt(widgets.yTextBox.text || '')
                 };
             case 'rotate':
                 return {
                     type: id,
-                    rotations: parseInt(widgets.fullTextBox.text)
+                    rotations: parseInt(widgets.fullTextBox.text || '')
                 };
             case 'zoom':
                 return {
                     type: id,
-                    zoom: parseInt(widgets.fullTextBox.text)
+                    zoom: parseInt(widgets.fullTextBox.text || '')
                 };
             case 'speed':
                 return {
                     type: id,
-                    speed: widgets.argumentDropdown.selectedIndex
+                    speed: (widgets.argumentDropdown.selectedIndex || 0) + 1
                 };
             case 'follow':
                 return {
                     type: id,
-                    id: null
+                    id: this.entityId
                 };
             case 'wait':
                 return {
                     type: id,
-                    duration: parseInt(widgets.fullTextBox.text)
+                    duration: parseInt(widgets.fullTextBox.text || '')
                 };
             case 'restart':
             case 'end':
@@ -382,7 +408,6 @@ class CommandEditorWindow {
             case 'follow':
                 if (command.id != null) {
                     this.entityId = command.id;
-                    widgets.fullTextBox.text = CommandEditorWindow.getEntityText(command.id);
                 }
                 break;
             case 'wait':

@@ -65,6 +65,7 @@ class TitleEditorWindow {
             width: width,
             height: height,
             widgets: [],
+            onClose: () => this.onClose(),
             onUpdate: () => this.onUpdate(),
             onTabChange: () => this.onTabChange(),
             tabs: [
@@ -75,12 +76,12 @@ class TitleEditorWindow {
                         frameDuration: 4
                     },
                     widgets: [
-                        <LabelWidget>{ type: "label", x: 10, y: 60, width: 91, height: 12, text: getString('STR_TITLE_SEQUENCE') },
-                        <DropdownWidget>{ type: "dropdown", x: 125, y: 60, width: 175, height: 12, onChange: index => this.onSequenceChange(index), name: 'dropdown-sequence' },
-                        <ButtonWidget>{ type: "button", x: 10, y: 82, width: 91, height: 12, onClick: () => this.onCreateSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_CREATE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_CREATE_SEQUENCE_TIP') },
-                        <ButtonWidget>{ type: "button", x: 10, y: 102, width: 91, height: 12, onClick: () => this.onDuplicateSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_DUPLICATE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DUPLICATE_SEQUENCE_TIP') },
-                        <ButtonWidget>{ type: "button", x: 110, y: 82, width: 91, height: 12, name: 'btn-delete', onClick: () => this.onDeleteSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_SEQUENCE_TIP') },
-                        <ButtonWidget>{ type: "button", x: 210, y: 82, width: 91, height: 12, name: 'btn-rename', onClick: () => this.onRenameSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_SEQUENCE_TIP') }
+                        { type: "label", x: 10, y: 60, width: 91, height: 12, text: getString('STR_TITLE_SEQUENCE') },
+                        { type: "dropdown", x: 125, y: 60, width: 175, height: 12, onChange: index => this.onSequenceChange(index), name: 'dropdown-sequence' },
+                        { type: "button", x: 10, y: 82, width: 91, height: 12, onClick: () => this.onCreateSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_CREATE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_CREATE_SEQUENCE_TIP') },
+                        { type: "button", x: 10, y: 102, width: 91, height: 12, onClick: () => this.onDuplicateSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_DUPLICATE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DUPLICATE_SEQUENCE_TIP') },
+                        { type: "button", x: 110, y: 82, width: 91, height: 12, name: 'btn-delete', onClick: () => this.onDeleteSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_SEQUENCE_TIP') },
+                        { type: "button", x: 210, y: 82, width: 91, height: 12, name: 'btn-rename', onClick: () => this.onRenameSequenceClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_SEQUENCE_TIP') }
                     ]
                 },
                 {
@@ -89,12 +90,12 @@ class TitleEditorWindow {
                         offset: { x: 4, y: 1 }
                     },
                     widgets: [
-                        <ButtonWidget>{ name: 'btn-add', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onAddParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_ADD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_ADD_TIP') },
-                        <ButtonWidget>{ name: 'btn-remove', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onRemoveParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_REMOVE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_REMOVE_TIP') },
-                        <ButtonWidget>{ name: 'btn-rename', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onRenameParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_TIP') },
-                        <ButtonWidget>{ name: 'btn-load', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onLoadParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_LOAD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_LOAD_TIP') },
+                        { name: 'btn-add', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onAddParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_ADD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_ADD_TIP') },
+                        { name: 'btn-remove', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onRemoveParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_REMOVE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_REMOVE_TIP') },
+                        { name: 'btn-rename', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onRenameParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_TIP') },
+                        { name: 'btn-load', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onLoadParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_LOAD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_LOAD_TIP') },
 
-                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, onClick: () => this.onParkSelect() }
+                        { name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scrollbars: "vertical", isStriped: true, canSelect: true, onClick: () => this.onParkSelect() }
                     ]
                 },
                 {
@@ -104,19 +105,19 @@ class TitleEditorWindow {
                         frameDuration: 4
                     },
                     widgets: [
-                        <ButtonWidget>{ name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onInsertCommand(), text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
-                        <ButtonWidget>{ name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onEditCommand(), text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
-                        <ButtonWidget>{ name: 'btn-delete', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onDeleteCommand(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
-                        <ButtonWidget>{ name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onSkipTo(), text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
-                        <ButtonWidget>{ name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
-                        <ButtonWidget>{ name: 'btn-movedown', type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', onClick: () => this.onMoveCommandDown(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
+                        { name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onInsertCommand(), text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
+                        { name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onEditCommand(), text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
+                        { name: 'btn-delete', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onDeleteCommand(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
+                        { name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onSkipTo(), text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
+                        { name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
+                        { name: 'btn-movedown', type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', onClick: () => this.onMoveCommandDown(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
 
-                        <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, onClick: () => this.onReplay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, onClick: () => this.onStop(), tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, onClick: () => this.onPlay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, onClick: () => this.onSkip(), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
+                        { name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, onClick: () => this.onReplay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
+                        { name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, onClick: () => this.onStop(), tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
+                        { name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, onClick: () => this.onPlay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
+                        { name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, onClick: () => this.onSkip(), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
 
-                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, columns: [{ width: 12 }, { width: 80 }, {}], onClick: () => this.onCommandSelect() }
+                        { name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scrollbars: "vertical", isStriped: true, canSelect: true, columns: [{ width: 12 }, { width: 80 }, {}], onClick: () => this.onCommandSelect() }
                     ]
                 }
             ]
@@ -146,6 +147,7 @@ class TitleEditorWindow {
     onTabChange() {
         switch (this.window.tabIndex) {
             case TitleEditorWindow.tabSequences:
+                this.onStop();
                 this.window.minWidth = 320;
                 this.window.maxWidth = 320;
                 this.window.minHeight = 127;
@@ -153,6 +155,7 @@ class TitleEditorWindow {
                 this.refreshSelectedSequence();
                 break;
             case TitleEditorWindow.tabParks:
+                this.onStop();
                 this.window.minWidth = 320;
                 this.window.maxWidth = 500;
                 this.window.minHeight = 270;
@@ -167,6 +170,10 @@ class TitleEditorWindow {
                 this.refreshCommands();
                 break;
         }
+    }
+
+    onClose() {
+        this.onStop();
     }
 
     onUpdate() {
@@ -278,6 +285,7 @@ class TitleEditorWindow {
     }
 
     onInsertCommand() {
+        this.onStop();
         this.openCommandWindow(null, command => {
             const titleSequence = this.getSelectedTitleSequence();
             if (titleSequence) {
@@ -299,6 +307,7 @@ class TitleEditorWindow {
     }
 
     onEditCommand() {
+        this.onStop();
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
             const selectedIndex = this.getSelectedCommandIndex();
@@ -332,6 +341,7 @@ class TitleEditorWindow {
     }
 
     onDeleteCommand() {
+        this.onStop();
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
             const listView = this.window.findWidget<ListView>('list');
@@ -356,6 +366,7 @@ class TitleEditorWindow {
     }
 
     onMoveCommand(delta: -1 | 1) {
+        this.onStop();
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
             const selectedIndex = this.getSelectedCommandIndex();
@@ -543,6 +554,36 @@ class TitleEditorWindow {
         }
     }
 
+    private static getEntityText(id: number) {
+        const entity = map.getEntity(id);
+        if (entity) {
+            switch (entity.type) {
+                case 'balloon':
+                    return 'Balloon';
+                case 'car':
+                    {
+                        const rideId = (<Car>entity).ride;
+                        const ride = map.getRide(rideId);
+                        if (ride) {
+                            return `Car (${ride.name})`;
+                        } else {
+                            return 'Car';
+                        }
+                    }
+                case 'duck':
+                    return 'Duck';
+                case 'litter':
+                    return 'Litter';
+                case 'peep':
+                    return (<Peep>entity).name;
+                default:
+                    return entity.type;
+            }
+        } else {
+            return '<unknown>';
+        }
+    }
+
     static getCommandArgument(parks: TitleSequencePark[], cmd: TitleSequenceCommand) {
         switch (cmd.type) {
             case 'load':
@@ -558,8 +599,11 @@ class TitleEditorWindow {
             case 'zoom':
                 return cmd.zoom.toString();
             case 'follow':
-                return cmd.id === null ? "<none>" : cmd.id.toString();
+                return cmd.id === null ? "<none>" : TitleEditorWindow.getEntityText(cmd.id);
             case 'speed':
+                if (cmd.speed >= 1 && cmd.speed <= speedNames.length) {
+                    return getString(speedNames[cmd.speed - 1]);
+                }
                 return cmd.speed.toString();
             case 'wait':
                 return cmd.duration.toString();
