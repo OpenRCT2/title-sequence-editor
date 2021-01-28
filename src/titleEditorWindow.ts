@@ -43,6 +43,7 @@ class TitleEditorWindow {
     window: Window;
     titleSequences: TitleSequence[] = [];
     currentSequence: number | undefined;
+    currentRenderedPosition: number | null = null;
 
     static getOrOpen() {
         var w = ui.getWindow(TitleEditorWindow.className);
@@ -93,11 +94,6 @@ class TitleEditorWindow {
                         <ButtonWidget>{ name: 'btn-rename', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onRenameParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_RENAME'), tooltip: getString('STR_TITLE_EDITOR_ACTION_RENAME_TIP') },
                         <ButtonWidget>{ name: 'btn-load', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onLoadParkClick(), text: getString('STR_TITLE_EDITOR_ACTION_LOAD'), tooltip: getString('STR_TITLE_EDITOR_ACTION_LOAD_TIP') },
 
-                        <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
-
                         <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, onClick: () => this.onParkSelect() }
                     ]
                 },
@@ -111,16 +107,16 @@ class TitleEditorWindow {
                         <ButtonWidget>{ name: 'btn-insert', type: "button", x: 8, y: 52 + (0 * 18), width: 72, height: 12, onClick: () => this.onInsertCommand(), text: getString('STR_TITLE_EDITOR_ACTION_INSERT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_INSERT_TIP') },
                         <ButtonWidget>{ name: 'btn-edit', type: "button", x: 8, y: 52 + (1 * 18), width: 72, height: 12, onClick: () => this.onEditCommand(), text: getString('STR_TITLE_EDITOR_ACTION_EDIT'), tooltip: getString('STR_TITLE_EDITOR_ACTION_EDIT_TIP') },
                         <ButtonWidget>{ name: 'btn-delete', type: "button", x: 8, y: 52 + (2 * 18), width: 72, height: 12, onClick: () => this.onDeleteCommand(), text: getString('STR_TITLE_EDITOR_ACTION_DELETE'), tooltip: getString('STR_TITLE_EDITOR_ACTION_DELETE_TIP') },
-                        <ButtonWidget>{ name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
+                        <ButtonWidget>{ name: 'btn-skipto', type: "button", x: 8, y: 52 + (3 * 18), width: 72, height: 12, onClick: () => this.onSkipTo(), text: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO'), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TO_TIP') },
                         <ButtonWidget>{ name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
                         <ButtonWidget>{ name: 'btn-movedown', type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', onClick: () => this.onMoveCommandDown(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
 
-                        <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
-                        <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
+                        <ButtonWidget>{ name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_RESTART, onClick: () => this.onReplay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
+                        <ButtonWidget>{ name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_STOP, onClick: () => this.onStop(), tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
+                        <ButtonWidget>{ name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_PLAY, onClick: () => this.onPlay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
+                        <ButtonWidget>{ name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: SPR_G2_TITLE_SKIP, onClick: () => this.onSkip(), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
 
-                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, columns: [{ width: 80 }, {}], onClick: () => this.onCommandSelect() }
+                        <ListView>{ name: "list", type: "listview", x: 89, y: 48, width: 320, height: 270, scroll: "both", isStriped: true, canSelect: true, columns: [{ width: 12 }, { width: 80 }, {}], onClick: () => this.onCommandSelect() }
                     ]
                 }
             ]
@@ -175,6 +171,7 @@ class TitleEditorWindow {
 
     onUpdate() {
         this.performLayout();
+        this.refreshPlayerButtons();
     }
 
     static showNamePrompt(titleStringId: string, initialValue: string, callback: (name: string) => void) {
@@ -381,6 +378,50 @@ class TitleEditorWindow {
         this.refreshCommandButtons();
     }
 
+    onReplay() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence && titleSequence.commands.length !== 0) {
+            titleSequence.seek(0);
+        }
+    }
+
+    onPlay() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            titleSequence.play()
+        }
+    }
+
+    onStop() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            titleSequence.stop()
+        }
+    }
+
+    onSkip() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence && titleSequence.position != null) {
+            let nextPosition = titleSequence.position + 1;
+            if (nextPosition >= titleSequence.commands.length) {
+                nextPosition = 0;
+            }
+            if (nextPosition < titleSequence.commands.length) {
+                titleSequence.seek(nextPosition)
+            }
+        }
+    }
+
+    onSkipTo() {
+        const titleSequence = this.getSelectedTitleSequence();
+        if (titleSequence) {
+            let nextPosition = this.getSelectedCommandIndex();
+            if (nextPosition && nextPosition < titleSequence.commands.length) {
+                titleSequence.seek(nextPosition)
+            }
+        }
+    }
+
     getSelectedCommandIndex() {
         const listView = this.window.findWidget<ListView>('list');
         if (listView) {
@@ -530,17 +571,24 @@ class TitleEditorWindow {
 
     refreshCommands() {
         const titleSequence = this.getSelectedTitleSequence();
+        const playingPosition = titleSequence?.position || null;
 
         const listView = this.window.findWidget<ListView>('list');
         if (listView) {
             if (titleSequence) {
-                listView.items = titleSequence.commands.map(x => {
+                listView.items = titleSequence.commands.map((x, i) => {
                     const descriptor = getCommandDescriptor(x.type);
                     if (descriptor) {
                         const arg = TitleEditorWindow.getCommandArgument(titleSequence.parks, x);
-                        return [getString(descriptor.name), arg];
+
+                        if (playingPosition === i) {
+                            const prefix = '{MEDIUMFONT}{OUTLINE}{WHITE}';
+                            return [' ▶', prefix + getString(descriptor.name), prefix + arg];
+                        } else {
+                            return ['', getString(descriptor.name), arg];
+                        }
                     } else {
-                        return ['Unknown', ''];
+                        return ['', 'Unknown', ''];
                     }
                 });
             } else {
@@ -549,6 +597,7 @@ class TitleEditorWindow {
         }
 
         this.refreshCommandButtons();
+        this.currentRenderedPosition = playingPosition;
     }
 
     refreshCommandButtons() {
@@ -575,7 +624,7 @@ class TitleEditorWindow {
         }
 
         if (skipToButton) {
-            skipToButton.isDisabled = selectedIndex === undefined;
+            skipToButton.isDisabled = selectedIndex === undefined || titleSequence?.isPlaying !== true;
         }
 
         if (moveUpButton) {
@@ -584,6 +633,29 @@ class TitleEditorWindow {
 
         if (moveDownButton) {
             moveDownButton.isDisabled = isReadOnly || selectedIndex === undefined || selectedIndex >= numCommands - 1;
+        }
+    }
+
+    refreshPlayerButtons() {
+        const replayButton = this.window.findWidget<ButtonWidget>('btn-replay');
+        const playButton = this.window.findWidget<ButtonWidget>('btn-play');
+        const stopButton = this.window.findWidget<ButtonWidget>('btn-stop');
+        const skipButton = this.window.findWidget<ButtonWidget>('btn-skip');
+
+        const titleSequence = this.getSelectedTitleSequence();
+        const isPlaying = titleSequence?.isPlaying == true;
+        const position = titleSequence?.position;
+        if (position !== this.currentRenderedPosition) {
+            this.refreshCommands();
+        }
+
+        if (playButton) {
+            playButton.isDisabled = isPlaying;
+        }
+        for (const btn of [replayButton, stopButton, skipButton]) {
+            if (btn) {
+                btn.isDisabled = !isPlaying;
+            }
         }
     }
 
