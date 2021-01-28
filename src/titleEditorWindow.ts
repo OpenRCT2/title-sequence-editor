@@ -217,8 +217,10 @@ class TitleEditorWindow {
         // TODO add confirm prompt
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence && !titleSequence.isReadOnly) {
-            titleSequence.delete();
-            this.refreshSequences();
+            this.showDeleteConfirmWindow('STR_DELETE_SEQUENCE', titleSequence.name, () => {
+                titleSequence.delete();
+                this.refreshSequences();
+            });
         }
     }
 
@@ -252,8 +254,10 @@ class TitleEditorWindow {
     onRemoveParkClick() {
         const park = this.getSelectedPark();
         if (park) {
-            park.delete();
-            this.refreshParks();
+            this.showDeleteConfirmWindow('STR_DELETE_PARK', park.fileName, () => {
+                park.delete();
+                this.refreshParks();
+            });
         }
     }
 
@@ -728,5 +732,35 @@ class TitleEditorWindow {
             }
         }
         return false;
+    }
+
+    private showDeleteConfirmWindow(title: string, subject: string, callback: () => void) {
+        const text = context.formatString(getString('STR_DELETE_CONFIRM_TEXT'), subject);
+
+        const width = 200;
+        const height = 100;
+
+        let w: Window;
+        const yesClick = () => {
+            w.close();
+            callback();
+        };
+        const cancelClick = () => {
+            w.close();
+        };
+        w = ui.openWindow({
+            classification: 'title-sequence-confirm',
+            title: getString(title),
+            x: (ui.width - width) / 2,
+            y: (ui.height - height) / 2,
+            width: width,
+            height: height,
+            colours: [26 | 0x80, 26 | 0x80],
+            widgets: [
+                { type: 'label', x: 10, y: 42, width: width - 20, height: 50, textAlign: 'centred', text: text },
+                { type: 'button', x: 10, y: height - 20, width: 85, height: 14, onClick: yesClick, text: getString('STR_YES') },
+                { type: 'button', x: width - 95, y: height - 20, width: 85, height: 14, onClick: cancelClick, text: getString('STR_CANCEL') }
+            ]
+        });
     }
 }

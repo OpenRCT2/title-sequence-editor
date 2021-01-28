@@ -14,10 +14,6 @@ const main = () => {
     ui.registerMenuItem('Title Sequence Editor', () => {
         TitleEditorWindow.getOrOpen();
     });
-
-    TitleEditorWindow.getOrOpen();
-    // ui.closeAllWindows();
-    // CommandEditorWindow.getOrOpen({ x: ui.width / 2, y: ui.height / 2 }, [], null, () => { });
 };
 
 registerPlugin({

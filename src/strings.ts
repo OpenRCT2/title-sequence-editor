@@ -1,4 +1,7 @@
 const enGB: { [name: string]: string } = {
+    'STR_DELETE_PARK': 'Delete park',
+    'STR_DELETE_SEQUENCE': 'Delete park sequence',
+    'STR_DELETE_CONFIRM_TEXT': 'Are you sure you want to delete\n{STRING}?',
     'STR_TITLE_EDITOR_TITLE': 'Title Sequences',
     'STR_TITLE_SEQUENCE': 'Title Sequence:',
     'STR_TITLE_EDITOR_ACTION_CREATE': 'Create',
@@ -19,6 +22,7 @@ const enGB: { [name: string]: string } = {
     'STR_TITLE_EDITOR_ACTION_INSERT': 'Insert',
     'STR_TITLE_EDITOR_ACTION_EDIT': 'Edit',
     'STR_TITLE_EDITOR_ACTION_SKIP_TO': 'Skip to',
+    'STR_YES': 'Yes',
     'STR_OK': 'OK',
     'STR_CANCEL': 'Cancel',
     'STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE': 'Select Sprite',
