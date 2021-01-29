@@ -65,7 +65,7 @@ class CommandEditorWindow {
         this.window = ui.openWindow({
             classification: CommandEditorWindow.className,
             title: getString('STR_TITLE_COMMAND_EDITOR_TITLE'),
-            colours: [1, 15, 15],
+            colours: [15, 15, 15],
             x: pos.x - (width / 2),
             y: pos.y - (height / 2),
             width: width,
