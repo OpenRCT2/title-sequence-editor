@@ -1,5 +1,3 @@
-/// <reference path="C:/Users/Ted/Documents/GitHub/openrct2/distribution/openrct2.d.ts" />
-
 const main = () => {
     if (typeof ui === 'undefined') {
         console.log("Plugin not available on headless mode.");
