@@ -10,6 +10,9 @@
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
         "strictBindCallApply": true,
-        "outFile": "out/title-editor.js"
+        "outFile": "out/title-editor.js",
+        "lib": [
+            "ES5"
+        ]
     }
 }
