@@ -7,10 +7,17 @@ jobs:
     - uses: actions/checkout@v2
     - name: Setup node.js
       uses: actions/setup-node@v2
+    - name: Install modules
+      run: |
+          mv node_modules/@types .
+          npm install
+          mv @types node_modules
     - name: Build
       run: npm run build
+    - name: Minify
+      run: npm run minify
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
         name: "OpenRCT2 Title Sequence Editor"
-        path: out/title-editor.js
+        path: out/title-editor.min.js
