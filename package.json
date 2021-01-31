@@ -6,9 +6,9 @@
     "author": "OpenRCT2",
     "main": "index.js",
     "scripts": {
-        "build": "tsc && npm run copy",
-        "watch": "tsc-watch --onSuccess \"npm run copy\"",
-        "copy": "copy out\\title-editor.js \"%HOMEDRIVE%%HOMEPATH%\\Documents\\OpenRCT2\\plugin\""
+        "build": "tsc",
+        "copy": "copy out\\title-editor.js \"%HOMEDRIVE%%HOMEPATH%\\Documents\\OpenRCT2\\plugin\"",
+        "watch": "tsc-watch --onSuccess \"npm run copy\""
     },
     "devDependencies": {
         "tsc-watch": "^4.2.9",
