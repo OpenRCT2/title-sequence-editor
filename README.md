@@ -2,7 +2,7 @@
 
 Title sequence editor plugin for OpenRCT2. This allows you to create, edit and preview custom title sequences (`.parkseq` files) that are played on the title screen of OpenRCT2.
 
-Formally built into the game, but now stripped out into an optional plugin.
+Formerly built into the game, but now stripped out into an optional plugin.
 
 ![Title Sequence Editor](images/screenshot.png "Title Sequence Editor")
 
