@@ -133,6 +133,7 @@ class CommandEditorWindow {
                     ui.activateTool({
                         id: toolId,
                         cursor: 'cross_hair',
+                        filter: ['terrain'],
                         onStart: () => {
                             const widgets = this.getWidgets();
                             widgets.getLocationButton.isPressed = true;
@@ -176,6 +177,7 @@ class CommandEditorWindow {
             ui.activateTool({
                 id: toolId,
                 cursor: 'cross_hair',
+                filter: ['entity'],
                 onStart: () => {
                     const widgets = this.getWidgets();
                     widgets.selectEntityButton.isPressed = true;
