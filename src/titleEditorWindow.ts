@@ -40,20 +40,22 @@ class TitleEditorWindow {
     static readonly tabParks = 1;
     static readonly tabCommands = 2;
 
+    static lastSequence: string | undefined;
+
     window: Window;
     titleSequences: TitleSequence[] = [];
     currentSequence: number | undefined;
     currentRenderedPosition: number | null = null;
 
-    static getOrOpen() {
+    static getOrOpen(initialTabIndex?: number) {
         var w = ui.getWindow(TitleEditorWindow.className);
         if (w) {
             w.close();
         }
-        return new TitleEditorWindow();
+        return new TitleEditorWindow(initialTabIndex);
     }
 
-    constructor() {
+    constructor(initialTabIndex?: number) {
         const width = 320;
         const height = 127;
         this.window = ui.openWindow({
@@ -68,6 +70,7 @@ class TitleEditorWindow {
             onClose: () => this.onClose(),
             onUpdate: () => this.onUpdate(),
             onTabChange: () => this.onTabChange(),
+            tabIndex: initialTabIndex,
             tabs: [
                 {
                     image: {
@@ -125,7 +128,9 @@ class TitleEditorWindow {
         if (!this.window) {
             throw new Error();
         }
+
         this.refreshSequences();
+        this.onTabChange();
     }
 
     performLayout() {
@@ -152,7 +157,7 @@ class TitleEditorWindow {
                 this.window.maxWidth = 320;
                 this.window.minHeight = 127;
                 this.window.maxHeight = 127;
-                this.refreshSelectedSequence();
+                this.refreshSequences();
                 break;
             case TitleEditorWindow.tabParks:
                 this.onStop();
@@ -170,6 +175,7 @@ class TitleEditorWindow {
                 this.refreshCommands();
                 break;
         }
+        this.onUpdate();
     }
 
     onClose() {
@@ -186,8 +192,7 @@ class TitleEditorWindow {
     }
 
     onSequenceChange(index: number) {
-        this.currentSequence = index;
-        this.refreshSelectedSequence();
+        this.setSelectedTitleSequence(index);
     }
 
     onCreateSequenceClick() {
@@ -280,7 +285,23 @@ class TitleEditorWindow {
     onLoadParkClick() {
         const park = this.getSelectedPark();
         if (park) {
+            // If we are in title screen, we need to re-open the window and restore its state
+            const isInGame = context.mode === 'normal';
+            const lastX = this.window.x;
+            const lastY = this.window.y;
+            const lastWidth = this.window.width;
+            const lastHeight = this.window.height;
+
             park.load();
+
+            if (!isInGame) {
+                const newInstance = TitleEditorWindow.getOrOpen(TitleEditorWindow.tabParks);
+                const newWindow = newInstance.window;
+                newWindow.x = lastX;
+                newWindow.y = lastY;
+                newWindow.width = lastWidth;
+                newWindow.height = lastHeight;
+            }
         }
     }
 
@@ -348,7 +369,7 @@ class TitleEditorWindow {
         this.onStop();
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
-            const listView = this.window.findWidget<ListView>('list');
+            const listView = this.window.findWidget<ListViewWidget>('list');
             if (listView) {
                 const selectedIndex = this.getSelectedCommandIndex();
                 if (selectedIndex !== undefined) {
@@ -438,7 +459,7 @@ class TitleEditorWindow {
     }
 
     getSelectedCommandIndex() {
-        const listView = this.window.findWidget<ListView>('list');
+        const listView = this.window.findWidget<ListViewWidget>('list');
         if (listView) {
             return listView.selectedCell?.row;
         }
@@ -446,52 +467,68 @@ class TitleEditorWindow {
     }
 
     setSelectedCommandIndex(index: number) {
-        const listView = this.window.findWidget<ListView>('list');
+        const listView = this.window.findWidget<ListViewWidget>('list');
         if (listView) {
             listView.selectedCell = { row: index, column: 0 };
         }
     }
 
     refreshSequences(): void {
+        this.titleSequences = titleSequenceManager.titleSequences;
         const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
         if (seqDropdown) {
-            let originalSequenceName = this.getSelectedTitleSequence()?.name;
-            this.titleSequences = titleSequenceManager.titleSequences;
             seqDropdown.items = this.titleSequences.map(x => x.name);
-            this.currentSequence = seqDropdown.selectedIndex;
-            if (originalSequenceName) {
-                this.setSelectedTitleSequence(originalSequenceName);
-            }
         }
-        this.refreshSelectedSequence();
+
+        if (this.currentSequence === undefined && TitleEditorWindow.lastSequence) {
+            this.setSelectedTitleSequence(TitleEditorWindow.lastSequence);
+        }
+
+        if (this.currentSequence === undefined || this.currentSequence >= this.titleSequences.length) {
+            this.setSelectedTitleSequence(0);
+        } else {
+            this.setSelectedTitleSequence(this.currentSequence);
+        }
     }
 
     refreshSelectedSequence() {
         const titleSequence = this.getSelectedTitleSequence();
-        if (titleSequence) {
-            const deleteButton = this.window.findWidget<ButtonWidget>('btn-delete');
-            if (deleteButton) {
-                deleteButton.isDisabled = titleSequence.isReadOnly;
-            }
+        TitleEditorWindow.lastSequence = titleSequence?.name;
 
-            const renameButton = this.window.findWidget<ButtonWidget>('btn-rename');
-            if (renameButton) {
-                renameButton.isDisabled = titleSequence.isReadOnly;
-            }
+        const deleteButton = this.window.findWidget<ButtonWidget>('btn-delete');
+        if (deleteButton) {
+            deleteButton.isDisabled = titleSequence?.isReadOnly ?? true;
+        }
+
+        const renameButton = this.window.findWidget<ButtonWidget>('btn-rename');
+        if (renameButton) {
+            renameButton.isDisabled = titleSequence?.isReadOnly ?? true;
+        }
+
+        const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
+        if (seqDropdown) {
+            seqDropdown.selectedIndex = this.currentSequence;
         }
     }
 
-    setSelectedTitleSequence(name: string) {
-        const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
-        if (seqDropdown) {
-            for (let i = 0; i < this.titleSequences.length; i++) {
-                if (this.titleSequences[i].name === name) {
-                    seqDropdown.selectedIndex = i;
-                    this.currentSequence = i;
-                    break;
-                }
+    getIndexForTitleSequence(name: string) {
+        for (let i = 0; i < this.titleSequences.length; i++) {
+            if (this.titleSequences[i].name === name) {
+                return i;
             }
         }
+        return undefined;
+    }
+
+    setSelectedTitleSequence(nameOrIndex: string | number) {
+        let index = typeof nameOrIndex === 'string' ?
+            this.getIndexForTitleSequence(nameOrIndex) :
+            nameOrIndex;
+
+        this.currentSequence = index === undefined || index >= this.titleSequences.length ?
+            undefined : index;
+
+        this.refreshSelectedSequence();
     }
 
     getSelectedTitleSequence() {
@@ -504,7 +541,7 @@ class TitleEditorWindow {
     getSelectedPark() {
         const titleSequence = this.getSelectedTitleSequence();
         if (titleSequence) {
-            const listView = this.window.findWidget<ListView>('list');
+            const listView = this.window.findWidget<ListViewWidget>('list');
             if (listView && listView.selectedCell) {
                 const index = listView.selectedCell.row;
                 const parks = titleSequence.parks;
@@ -519,7 +556,7 @@ class TitleEditorWindow {
     refreshParks() {
         const titleSequence = this.getSelectedTitleSequence();
 
-        const listView = this.window.findWidget<ListView>('list');
+        const listView = this.window.findWidget<ListViewWidget>('list');
         if (listView) {
             if (titleSequence) {
                 listView.items = titleSequence.parks.map(x => x.fileName);
@@ -621,7 +658,7 @@ class TitleEditorWindow {
         const titleSequence = this.getSelectedTitleSequence();
         const playingPosition = titleSequence?.position || null;
 
-        const listView = this.window.findWidget<ListView>('list');
+        const listView = this.window.findWidget<ListViewWidget>('list');
         if (listView) {
             if (titleSequence) {
                 listView.items = titleSequence.commands.map((x, i) => {
