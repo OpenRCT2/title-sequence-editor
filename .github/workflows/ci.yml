@@ -8,7 +8,10 @@ jobs:
     - name: Setup node.js
       uses: actions/setup-node@v2
     - name: Install modules
-      run: npm install
+      run: |
+          mv node_modules/@types .
+          npm install
+          mv @types node_modules
     - name: Build
       run: npm run build
     - name: Minify
