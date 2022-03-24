@@ -2,7 +2,7 @@ enum ImageMoniker {
     Restart,
     Stop,
     Play,
-    Skip
+    Skip,
 }
 
 var imageMap: number[] = [];

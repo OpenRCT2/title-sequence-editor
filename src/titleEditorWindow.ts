@@ -109,7 +109,7 @@ class TitleEditorWindow {
                         { name: 'btn-moveup', type: "button", x: 8, y: 52 + (5 * 18), width: 36, height: 12, text: '▲', onClick: () => this.onMoveCommandUp(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_DOWN_TIP') },
                         { name: 'btn-movedown', type: "button", x: 44, y: 52 + (5 * 18), width: 36, height: 12, text: '▼', onClick: () => this.onMoveCommandDown(), tooltip: getString('STR_TITLE_EDITOR_ACTION_MOVE_UP_TIP') },
 
-                        { name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: getImage(ImageMoniker.Restart), onClick: () => this.onReplay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_REPLAY_TIP'), border: true },
+                        { name: 'btn-replay', type: "button", x: 8 + (0 * 18), y: 270, width: 18, height: 16, image: getImage(ImageMoniker.Restart), onClick: () => this.onReplay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_RESTART_TIP'), border: true },
                         { name: 'btn-stop', type: "button", x: 8 + (1 * 18), y: 270, width: 18, height: 16, image: getImage(ImageMoniker.Stop), onClick: () => this.onStop(), tooltip: getString('STR_TITLE_EDITOR_ACTION_STOP_TIP'), border: true },
                         { name: 'btn-play', type: "button", x: 8 + (2 * 18), y: 270, width: 18, height: 16, image: getImage(ImageMoniker.Play), onClick: () => this.onPlay(), tooltip: getString('STR_TITLE_EDITOR_ACTION_PLAY_TIP'), border: true },
                         { name: 'btn-skip', type: "button", x: 8 + (3 * 18), y: 270, width: 18, height: 16, image: getImage(ImageMoniker.Skip), onClick: () => this.onSkip(), tooltip: getString('STR_TITLE_EDITOR_ACTION_SKIP_TIP'), border: true },
