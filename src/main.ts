@@ -9,6 +9,8 @@ const main = () => {
         return;
     }
 
+    allocateImages();
+
     ui.registerMenuItem('Title Sequence Editor', () => {
         TitleEditorWindow.getOrOpen();
     });
