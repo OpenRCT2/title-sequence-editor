@@ -22,7 +22,7 @@ const main = () => {
 
 registerPlugin({
     name: 'Title Sequence Editor',
-    version: '1.0',
+    version: '1.2.0',
     authors: ['OpenRCT2'],
     type: 'intransient',
     licence: 'MIT',
