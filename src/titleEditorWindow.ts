@@ -633,6 +633,8 @@ class TitleEditorWindow {
                 return cmd.rotations.toString();
             case 'zoom':
                 return cmd.zoom.toString();
+            case 'visibility':
+                return '0x' + cmd.flags.toString(16);
             case 'follow':
                 return cmd.id === null ? "<none>" : TitleEditorWindow.getEntityText(cmd.id);
             case 'speed':
