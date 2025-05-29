@@ -110,21 +110,21 @@ class CommandEditorWindow {
                 { type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
                 { type: "viewport", x: 16, y: 70, width: 168, height: 24, name: 'viewport' },
 
-                { type: "button", x: 2, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29500, name: 'btn-hide-vegetation' },
-                { type: "button", x: 27, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29501, name: 'btn-hide-scenery' },
-                { type: "button", x: 52, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29372, name: 'btn-hide-paths' },
+                { type: "button", x: 2, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29434, name: 'btn-hide-vegetation' },
+                { type: "button", x: 27, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29435, name: 'btn-hide-scenery' },
+                { type: "button", x: 52, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29373, name: 'btn-hide-paths' },
                 { type: "button", x: 77, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5187, name: 'btn-hide-rides' },
-                { type: "button", x: 102, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29502, name: 'btn-hide-vehicles' },
-                { type: "button", x: 127, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29503, name: 'btn-hide-supports' },
+                { type: "button", x: 102, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29436, name: 'btn-hide-vehicles' },
+                { type: "button", x: 127, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29437, name: 'btn-hide-supports' },
                 { type: "button", x: 152, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5193, name: 'btn-hide-guests' },
                 { type: "button", x: 177, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5196, name: 'btn-hide-staff' },
 
-                { type: "button", x: 2, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-vegetation' },
-                { type: "button", x: 27, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-scenery' },
-                { type: "button", x: 52, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-paths' },
-                { type: "button", x: 77, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-rides' },
-                { type: "button", x: 102, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-vehicles' },
-                { type: "button", x: 127, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29504, name: 'btn-invisible-supports' },
+                { type: "button", x: 2, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-vegetation' },
+                { type: "button", x: 27, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-scenery' },
+                { type: "button", x: 52, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-paths' },
+                { type: "button", x: 77, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-rides' },
+                { type: "button", x: 102, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-vehicles' },
+                { type: "button", x: 127, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-supports' },
                 { type: "button", x: 152, y: 77, width: 49, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-visibility' },
 
                 { type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
@@ -221,7 +221,7 @@ class CommandEditorWindow {
         const w2 = this.window.widgets[i - 8] as ButtonWidget;
         w.isPressed = !w.isPressed;
         if (w.isPressed) w2.isPressed = true;
-        w.image = w.isPressed ? 29505 : 29504;
+        w.image = w.isPressed ? 29439 : 29438;
     }
 
 
@@ -335,17 +335,17 @@ class CommandEditorWindow {
         widgets.hideStaff.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_STAFF);
 
         widgets.invisibleRides.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_RIDES);
-        widgets.invisibleRides.image = widgets.invisibleRides.isPressed ? 29505 : 29504;
+        widgets.invisibleRides.image = widgets.invisibleRides.isPressed ? 29439 : 29438;
         widgets.invisibleVehicles.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEHICLES);
-        widgets.invisibleVehicles.image = widgets.invisibleVehicles.isPressed ? 29505 : 29504;
+        widgets.invisibleVehicles.image = widgets.invisibleVehicles.isPressed ? 29439 : 29438;
         widgets.invisibleVegetation.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEGETATION);
-        widgets.invisibleVegetation.image = widgets.invisibleVegetation.isPressed ? 29505 : 29504;
+        widgets.invisibleVegetation.image = widgets.invisibleVegetation.isPressed ? 29439 : 29438;
         widgets.invisibleScenery.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SCENERY);
-        widgets.invisibleScenery.image = widgets.invisibleScenery.isPressed ? 29505 : 29504;
+        widgets.invisibleScenery.image = widgets.invisibleScenery.isPressed ? 29439 : 29438;
         widgets.invisiblePaths.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_PATHS);
-        widgets.invisiblePaths.image = widgets.invisiblePaths.isPressed ? 29505 : 29504;
+        widgets.invisiblePaths.image = widgets.invisiblePaths.isPressed ? 29439 : 29438;
         widgets.invisibleSupports.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SUPPORTS);
-        widgets.invisibleSupports.image = widgets.invisibleSupports.isPressed ? 29505 : 29504;
+        widgets.invisibleSupports.image = widgets.invisibleSupports.isPressed ? 29439 : 29438;
     }
 
     getFlagsFromVisibilityWidgets(): number {

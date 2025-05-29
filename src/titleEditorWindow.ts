@@ -501,7 +501,7 @@ class TitleEditorWindow {
 
         const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
         if (seqDropdown && this.currentSequence !== undefined) {
-            seqDropdown.selectedIndex = this.currentSequence;
+            seqDropdown.selectedIndex = this.currentSequence ?? 0;
         }
     }
 
