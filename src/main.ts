@@ -26,5 +26,6 @@ registerPlugin({
     authors: ['OpenRCT2'],
     type: 'intransient',
     licence: 'MIT',
+    targetApiVersion: 52,
     main: main
 });
