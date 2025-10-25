@@ -5,6 +5,18 @@ const speedNames = [
     'STR_SPEED_TURBO'
 ];
 
+const followNames = [
+    'STR_RANDOM_VEHICLE',
+    'STR_RANDOM_GUEST',
+    'STR_RANDOM_STAFF'
+];
+
+const entityTypes = [
+    'car' as EntityType,
+    'guest' as EntityType,
+    'staff' as EntityType
+];
+
 type CommandId =
     'load' |
     'loadsc' |
@@ -14,6 +26,7 @@ type CommandId =
     'visibility' |
     'speed' |
     'follow' |
+    'random' |
     'wait' |
     'restart' |
     'end';
@@ -54,6 +67,7 @@ const CommandDescriptors: CommandDesc[] = [
     { id: 'visibility', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_VISIBILITY', desc: '' },
     { id: 'speed', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_SPEED', desc: 'STR_TITLE_EDITOR_ARGUMENT_SPEED' },
     { id: 'follow', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_FOLLOW', desc: '' },
+    { id: 'random', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_RANDOM', desc: 'STR_TITLE_EDITOR_ARGUMENT_RANDOM' },
     { id: 'wait', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_WAIT', desc: 'STR_TITLE_EDITOR_ARGUMENT_WAIT_SECONDS' },
     { id: 'restart', name: 'STR_TITLE_EDITOR_RESTART', desc: '' },
     { id: 'end', name: 'STR_TITLE_EDITOR_END', desc: '' },
@@ -107,7 +121,8 @@ class CommandEditorWindow {
                 { type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
                 { type: "button", x: 112, y: 56, width: 72, height: 12, onClick: () => this.onSelectScenario(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
-                { type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
+                { type: "checkbox", x: 103, y: 56, width: 81, height: 12, text: getString('STR_TITLE_EDITOR_ARGUMENT_SCROLL_VIEWPORT'), name: 'chk-scroll-viewport' },
+                { type: "button", x: 16, y: 56, width: 81, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
                 { type: "viewport", x: 16, y: 70, width: 168, height: 24, name: 'viewport' },
 
                 { type: "button", x: 2, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29434, name: 'btn-hide-vegetation' },
@@ -289,6 +304,16 @@ class CommandEditorWindow {
         }
     }
 
+    onFollowChange(index: number) {
+        const widgets = this.getWidgets();
+        if (index != 0) {
+            widgets.selectEntityButton.isVisible = false;
+            this.entityId = null;
+        } else {
+            widgets.selectEntityButton.isVisible = true;
+        }
+    }
+
     getWidgets() {
         const w = this.window;
         return {
@@ -302,6 +327,7 @@ class CommandEditorWindow {
             yTextBox: w.findWidget<TextBoxWidget>('textbox-y'),
             fullTextBox: w.findWidget<TextBoxWidget>('textbox-full'),
             viewport: w.findWidget<ViewportWidget>('viewport'),
+            scrollCheckBox: w.findWidget<CheckboxWidget>('chk-scroll-viewport'),
 
             hideVegetation: w.findWidget<ButtonWidget>('btn-hide-vegetation'),
             hideScenery: w.findWidget<ButtonWidget>('btn-hide-scenery'),
@@ -415,6 +441,10 @@ class CommandEditorWindow {
                 widgets.fullTextBox.isDisabled = true;
                 widgets.viewport.isVisible = false;
                 break;
+            case 'random':
+                widgets.argumentDropdown.items = followNames.map(x => getString(x));
+                widgets.argumentDropdown.selectedIndex = 0;
+                break;
             case 'wait':
                 widgets.fullTextBox.text = '10000';
                 widgets.fullTextBox.maxLength = 6;
@@ -431,7 +461,7 @@ class CommandEditorWindow {
             }
         };
 
-        setVisibility(widgets.argumentDropdown, ['load', 'speed']);
+        setVisibility(widgets.argumentDropdown, ['load', 'speed', 'random']);
         setVisibility(widgets.getLocationButton, ['location', 'zoom']);
         setVisibility(widgets.selectScenarioButton, ['loadsc']);
         setVisibility(widgets.selectEntityButton, ['follow']);
@@ -439,6 +469,7 @@ class CommandEditorWindow {
         setVisibility(widgets.yTextBox, ['location']);
         setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'wait']);
         setVisibility(widgets.viewport, ['follow']);
+        setVisibility(widgets.scrollCheckBox, ['follow', 'random'])
 
         setVisibility(widgets.hideVegetation, ['visibility']);
         setVisibility(widgets.hideScenery, ['visibility']);
@@ -502,7 +533,7 @@ class CommandEditorWindow {
             case 'visibility':
                 return {
                     type: id,
-                    flags: this.getFlagsFromVisibilityWidgets()
+                    flags: this.getFlagsFromVisibilityWidgets() || 0
                 };
             case 'speed':
                 return {
@@ -512,7 +543,14 @@ class CommandEditorWindow {
             case 'follow':
                 return {
                     type: id,
-                    id: this.entityId
+                    id: this.entityId,
+                    scrollToLocation: widgets.scrollCheckBox.isChecked
+                };
+            case 'random':
+                return {
+                    type: id,
+                    entityType: entityTypes[widgets.argumentDropdown.selectedIndex],
+                    scrollToLocation: widgets.scrollCheckBox.isChecked
                 };
             case 'wait':
                 return {
@@ -558,6 +596,10 @@ class CommandEditorWindow {
                 if (command.id != null) {
                     this.entityId = command.id;
                 }
+                widgets.scrollCheckBox.isChecked = command.scrollToLocation;
+                break;
+            case 'random':
+                widgets.scrollCheckBox.isChecked = command.scrollToLocation;
                 break;
             case 'wait':
                 widgets.fullTextBox.text = command.duration.toString();

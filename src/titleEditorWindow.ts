@@ -646,6 +646,8 @@ class TitleEditorWindow {
                 return cmd.duration.toString();
             case 'loadsc':
                 return cmd.scenario;
+            case 'random':
+                return cmd.entityType === null ? "<none>" : cmd.entityType;
         }
         return "";
     }
