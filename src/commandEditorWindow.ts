@@ -5,17 +5,52 @@ const speedNames = [
     'STR_SPEED_TURBO'
 ];
 
+const followNames = [
+    'STR_RANDOM_VEHICLE',
+    'STR_RANDOM_GUEST',
+    'STR_RANDOM_STAFF'
+];
+
+const entityTypes = [
+    'car' as EntityType,
+    'guest' as EntityType,
+    'staff' as EntityType
+];
+
 type CommandId =
     'load' |
     'loadsc' |
     'location' |
     'rotate' |
     'zoom' |
+    'visibility' |
     'speed' |
     'follow' |
+    'random' |
     'wait' |
     'restart' |
     'end';
+
+enum ViewportFlags
+{
+    VIEWPORT_FLAG_NONE = 0,
+
+    VIEWPORT_FLAG_HIDE_RIDES = (1 << 1),
+    VIEWPORT_FLAG_HIDE_VEHICLES = (1 << 20),
+    VIEWPORT_FLAG_HIDE_VEGETATION = (1 << 21),
+    VIEWPORT_FLAG_HIDE_SCENERY = (1 << 2),
+    VIEWPORT_FLAG_HIDE_PATHS = (1 << 16),
+    VIEWPORT_FLAG_HIDE_SUPPORTS = (1 << 3),
+    VIEWPORT_FLAG_HIDE_GUESTS = (1 << 11),
+    VIEWPORT_FLAG_HIDE_STAFF = (1 << 23),
+
+    VIEWPORT_FLAG_INVISIBLE_RIDES = (1 << 24),
+    VIEWPORT_FLAG_INVISIBLE_VEHICLES = (1 << 25),
+    VIEWPORT_FLAG_INVISIBLE_VEGETATION = (1 << 26),
+    VIEWPORT_FLAG_INVISIBLE_SCENERY = (1 << 27),
+    VIEWPORT_FLAG_INVISIBLE_PATHS = (1 << 28),
+    VIEWPORT_FLAG_INVISIBLE_SUPPORTS = (1 << 29),
+}
 
 interface CommandDesc {
     id: CommandId;
@@ -29,8 +64,10 @@ const CommandDescriptors: CommandDesc[] = [
     { id: 'location', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_LOCATION', desc: 'STR_TITLE_EDITOR_ARGUMENT_COORDINATES' },
     { id: 'rotate', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ROTATE', desc: 'STR_TITLE_EDITOR_ARGUMENT_ROTATIONS' },
     { id: 'zoom', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_ZOOM', desc: 'STR_TITLE_EDITOR_ARGUMENT_ZOOM_LEVEL' },
+    { id: 'visibility', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_VISIBILITY', desc: '' },
     { id: 'speed', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_SPEED', desc: 'STR_TITLE_EDITOR_ARGUMENT_SPEED' },
     { id: 'follow', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_FOLLOW', desc: '' },
+    { id: 'random', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_RANDOM', desc: 'STR_TITLE_EDITOR_ARGUMENT_RANDOM' },
     { id: 'wait', name: 'STR_TITLE_EDITOR_COMMAND_TYPE_WAIT', desc: 'STR_TITLE_EDITOR_ARGUMENT_WAIT_SECONDS' },
     { id: 'restart', name: 'STR_TITLE_EDITOR_RESTART', desc: '' },
     { id: 'end', name: 'STR_TITLE_EDITOR_END', desc: '' },
@@ -60,7 +97,7 @@ class CommandEditorWindow {
 
     constructor(pos: ScreenCoordsXY, parks: string[], command: TitleSequenceCommand | null, callback: CommandWindowCallback) {
         const commands = CommandDescriptors.map(x => getString(x.name));
-        const width = 200;
+        const width = 203;
         const height = 120;
         this.window = ui.openWindow({
             classification: CommandEditorWindow.className,
@@ -84,8 +121,26 @@ class CommandEditorWindow {
                 { type: "button", x: 103, y: 56, width: 81, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-location' },
                 { type: "button", x: 112, y: 56, width: 72, height: 12, onClick: () => this.onSelectScenario(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_SELECT_SCENARIO'), name: 'btn-select-scenario' },
 
-                { type: "button", x: 16, y: 56, width: 168, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
+                { type: "checkbox", x: 103, y: 56, width: 81, height: 12, text: getString('STR_TITLE_EDITOR_ARGUMENT_SCROLL_VIEWPORT'), name: 'chk-scroll-viewport' },
+                { type: "button", x: 16, y: 56, width: 81, height: 12, onClick: () => this.onSelectEntity(), text: getString('STR_TITLE_COMMAND_EDITOR_SELECT_SPRITE'), name: 'btn-select-entity' },
                 { type: "viewport", x: 16, y: 70, width: 168, height: 24, name: 'viewport' },
+
+                { type: "button", x: 2, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29434, name: 'btn-hide-vegetation' },
+                { type: "button", x: 27, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29435, name: 'btn-hide-scenery' },
+                { type: "button", x: 52, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29373, name: 'btn-hide-paths' },
+                { type: "button", x: 77, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5187, name: 'btn-hide-rides' },
+                { type: "button", x: 102, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29436, name: 'btn-hide-vehicles' },
+                { type: "button", x: 127, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 29437, name: 'btn-hide-supports' },
+                { type: "button", x: 152, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5193, name: 'btn-hide-guests' },
+                { type: "button", x: 177, y: 52, width: 24, height: 24, onClick: (i: number) => this.onToggle(i), image: 5196, name: 'btn-hide-staff' },
+
+                { type: "button", x: 2, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-vegetation' },
+                { type: "button", x: 27, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-scenery' },
+                { type: "button", x: 52, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-paths' },
+                { type: "button", x: 77, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-rides' },
+                { type: "button", x: 102, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-vehicles' },
+                { type: "button", x: 127, y: 77, width: 24, height: 12, onClick: (i: number) => this.onToggleEye(i), image: 29438, name: 'btn-invisible-supports' },
+                { type: "button", x: 152, y: 77, width: 49, height: 12, onClick: () => this.onGetClick(), text: getString('STR_TITLE_COMMAND_EDITOR_ACTION_GET_LOCATION'), name: 'btn-get-visibility' },
 
                 { type: "button", x: 10, y: 99, width: 71, height: 14, onClick: () => this.onOkClick(), text: getString('STR_OK') },
                 { type: "button", x: 120, y: 99, width: 71, height: 14, onClick: () => this.onCancelClick(), text: getString('STR_CANCEL') },
@@ -165,9 +220,25 @@ class CommandEditorWindow {
                 }
             } else if (command.id === 'zoom') {
                 widgets.fullTextBox.text = ui.mainViewport.zoom.toString();
+            } else if (command.id === 'visibility') {
+                this.setVisibilityWidgetsFromFlags(ui.mainViewport.visibilityFlags);
             }
         }
     }
+
+    private onToggle(i: number) {
+        const w = this.window.widgets[i] as ButtonWidget;
+        w.isPressed = !w.isPressed;
+    }
+
+    private onToggleEye(i: number) {
+        const w = this.window.widgets[i] as ButtonWidget;
+        const w2 = this.window.widgets[i - 8] as ButtonWidget;
+        w.isPressed = !w.isPressed;
+        if (w.isPressed) w2.isPressed = true;
+        w.image = w.isPressed ? 29439 : 29438;
+    }
+
 
     private onSelectEntity() {
         const toolId = CommandEditorWindow.selectEntityToolName;
@@ -233,6 +304,16 @@ class CommandEditorWindow {
         }
     }
 
+    onFollowChange(index: number) {
+        const widgets = this.getWidgets();
+        if (index != 0) {
+            widgets.selectEntityButton.isVisible = false;
+            this.entityId = null;
+        } else {
+            widgets.selectEntityButton.isVisible = true;
+        }
+    }
+
     getWidgets() {
         const w = this.window;
         return {
@@ -245,8 +326,75 @@ class CommandEditorWindow {
             xTextBox: w.findWidget<TextBoxWidget>('textbox-x'),
             yTextBox: w.findWidget<TextBoxWidget>('textbox-y'),
             fullTextBox: w.findWidget<TextBoxWidget>('textbox-full'),
-            viewport: w.findWidget<ViewportWidget>('viewport')
+            viewport: w.findWidget<ViewportWidget>('viewport'),
+            scrollCheckBox: w.findWidget<CheckboxWidget>('chk-scroll-viewport'),
+
+            hideVegetation: w.findWidget<ButtonWidget>('btn-hide-vegetation'),
+            hideScenery: w.findWidget<ButtonWidget>('btn-hide-scenery'),
+            hidePaths: w.findWidget<ButtonWidget>('btn-hide-paths'),
+            hideRides: w.findWidget<ButtonWidget>('btn-hide-rides'),
+            hideVehicles: w.findWidget<ButtonWidget>('btn-hide-vehicles'),
+            hideSupports: w.findWidget<ButtonWidget>('btn-hide-supports'),
+            hideGuests: w.findWidget<ButtonWidget>('btn-hide-guests'),
+            hideStaff: w.findWidget<ButtonWidget>('btn-hide-staff'),
+
+            invisibleVegetation: w.findWidget<ButtonWidget>('btn-invisible-vegetation'),
+            invisibleScenery: w.findWidget<ButtonWidget>('btn-invisible-scenery'),
+            invisiblePaths: w.findWidget<ButtonWidget>('btn-invisible-paths'),
+            invisibleRides: w.findWidget<ButtonWidget>('btn-invisible-rides'),
+            invisibleVehicles: w.findWidget<ButtonWidget>('btn-invisible-vehicles'),
+            invisibleSupports: w.findWidget<ButtonWidget>('btn-invisible-supports'),
+            getVisibilityButton: w.findWidget<ButtonWidget>('btn-get-visibility')
         };
+    }
+
+    setVisibilityWidgetsFromFlags(flags: number) {
+        const widgets = this.getWidgets();
+
+        widgets.hideRides.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_RIDES);
+        widgets.hideVehicles.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_VEHICLES);
+        widgets.hideVegetation.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_VEGETATION);
+        widgets.hideScenery.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_SCENERY);
+        widgets.hidePaths.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_PATHS);
+        widgets.hideSupports.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_SUPPORTS);
+        widgets.hideGuests.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_GUESTS);
+        widgets.hideStaff.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_HIDE_STAFF);
+
+        widgets.invisibleRides.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_RIDES);
+        widgets.invisibleRides.image = widgets.invisibleRides.isPressed ? 29439 : 29438;
+        widgets.invisibleVehicles.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEHICLES);
+        widgets.invisibleVehicles.image = widgets.invisibleVehicles.isPressed ? 29439 : 29438;
+        widgets.invisibleVegetation.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEGETATION);
+        widgets.invisibleVegetation.image = widgets.invisibleVegetation.isPressed ? 29439 : 29438;
+        widgets.invisibleScenery.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SCENERY);
+        widgets.invisibleScenery.image = widgets.invisibleScenery.isPressed ? 29439 : 29438;
+        widgets.invisiblePaths.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_PATHS);
+        widgets.invisiblePaths.image = widgets.invisiblePaths.isPressed ? 29439 : 29438;
+        widgets.invisibleSupports.isPressed = !!(flags & ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SUPPORTS);
+        widgets.invisibleSupports.image = widgets.invisibleSupports.isPressed ? 29439 : 29438;
+    }
+
+    getFlagsFromVisibilityWidgets(): number {
+        const widgets = this.getWidgets();
+        var flags = 0;
+
+        if (widgets.hideRides.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_RIDES;
+        if (widgets.hideVehicles.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_VEHICLES;
+        if (widgets.hideVegetation.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_VEGETATION;
+        if (widgets.hideScenery.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_SCENERY;
+        if (widgets.hidePaths.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_PATHS;
+        if (widgets.hideSupports.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_SUPPORTS;
+        if (widgets.hideGuests.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_GUESTS;
+        if (widgets.hideStaff.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_HIDE_STAFF;
+
+        if (widgets.invisibleRides.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_RIDES;
+        if (widgets.invisibleVehicles.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEHICLES;
+        if (widgets.invisibleVegetation.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_VEGETATION;
+        if (widgets.invisibleScenery.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SCENERY;
+        if (widgets.invisiblePaths.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_PATHS;
+        if (widgets.invisibleSupports.isPressed) flags |= ViewportFlags.VIEWPORT_FLAG_INVISIBLE_SUPPORTS;
+
+        return flags;
     }
 
     initialiseWidgetsForCommand(id: CommandId) {
@@ -293,6 +441,10 @@ class CommandEditorWindow {
                 widgets.fullTextBox.isDisabled = true;
                 widgets.viewport.isVisible = false;
                 break;
+            case 'random':
+                widgets.argumentDropdown.items = followNames.map(x => getString(x));
+                widgets.argumentDropdown.selectedIndex = 0;
+                break;
             case 'wait':
                 widgets.fullTextBox.text = '10000';
                 widgets.fullTextBox.maxLength = 6;
@@ -309,7 +461,7 @@ class CommandEditorWindow {
             }
         };
 
-        setVisibility(widgets.argumentDropdown, ['load', 'speed']);
+        setVisibility(widgets.argumentDropdown, ['load', 'speed', 'random']);
         setVisibility(widgets.getLocationButton, ['location', 'zoom']);
         setVisibility(widgets.selectScenarioButton, ['loadsc']);
         setVisibility(widgets.selectEntityButton, ['follow']);
@@ -317,6 +469,24 @@ class CommandEditorWindow {
         setVisibility(widgets.yTextBox, ['location']);
         setVisibility(widgets.fullTextBox, ['loadsc', 'rotate', 'zoom', 'wait']);
         setVisibility(widgets.viewport, ['follow']);
+        setVisibility(widgets.scrollCheckBox, ['follow', 'random'])
+
+        setVisibility(widgets.hideVegetation, ['visibility']);
+        setVisibility(widgets.hideScenery, ['visibility']);
+        setVisibility(widgets.hidePaths, ['visibility']);
+        setVisibility(widgets.hideRides, ['visibility']);
+        setVisibility(widgets.hideVehicles, ['visibility']);
+        setVisibility(widgets.hideSupports, ['visibility']);
+        setVisibility(widgets.hideGuests, ['visibility']);
+        setVisibility(widgets.hideStaff, ['visibility']);
+
+        setVisibility(widgets.invisibleVegetation, ['visibility']);
+        setVisibility(widgets.invisibleScenery, ['visibility']);
+        setVisibility(widgets.invisiblePaths, ['visibility']);
+        setVisibility(widgets.invisibleRides, ['visibility']);
+        setVisibility(widgets.invisibleVehicles, ['visibility']);
+        setVisibility(widgets.invisibleSupports, ['visibility']);
+        setVisibility(widgets.getVisibilityButton, ['visibility']);
     }
 
     getCommandId() {
@@ -360,6 +530,11 @@ class CommandEditorWindow {
                     type: id,
                     zoom: parseInt(widgets.fullTextBox.text || '')
                 };
+            case 'visibility':
+                return {
+                    type: id,
+                    flags: this.getFlagsFromVisibilityWidgets() || 0
+                };
             case 'speed':
                 return {
                     type: id,
@@ -368,7 +543,14 @@ class CommandEditorWindow {
             case 'follow':
                 return {
                     type: id,
-                    id: this.entityId
+                    id: this.entityId,
+                    scrollToLocation: widgets.scrollCheckBox.isChecked
+                };
+            case 'random':
+                return {
+                    type: id,
+                    entityType: entityTypes[widgets.argumentDropdown.selectedIndex],
+                    scrollToLocation: widgets.scrollCheckBox.isChecked
                 };
             case 'wait':
                 return {
@@ -404,6 +586,9 @@ class CommandEditorWindow {
             case 'zoom':
                 widgets.fullTextBox.text = command.zoom.toString();
                 break;
+            case 'visibility':
+                this.setVisibilityWidgetsFromFlags(command.flags);
+                break;
             case 'speed':
                 widgets.fullTextBox.text = command.speed.toString();
                 break;
@@ -411,6 +596,10 @@ class CommandEditorWindow {
                 if (command.id != null) {
                     this.entityId = command.id;
                 }
+                widgets.scrollCheckBox.isChecked = command.scrollToLocation;
+                break;
+            case 'random':
+                widgets.scrollCheckBox.isChecked = command.scrollToLocation;
                 break;
             case 'wait':
                 widgets.fullTextBox.text = command.duration.toString();

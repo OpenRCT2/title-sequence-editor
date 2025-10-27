@@ -501,7 +501,7 @@ class TitleEditorWindow {
 
         const seqDropdown = this.window.findWidget<DropdownWidget>('dropdown-sequence');
         if (seqDropdown && this.currentSequence !== undefined) {
-            seqDropdown.selectedIndex = this.currentSequence;
+            seqDropdown.selectedIndex = this.currentSequence ?? 0;
         }
     }
 
@@ -633,6 +633,8 @@ class TitleEditorWindow {
                 return cmd.rotations.toString();
             case 'zoom':
                 return cmd.zoom.toString();
+            case 'visibility':
+                return '0x' + cmd.flags.toString(16);
             case 'follow':
                 return cmd.id === null ? "<none>" : TitleEditorWindow.getEntityText(cmd.id);
             case 'speed':
@@ -644,6 +646,8 @@ class TitleEditorWindow {
                 return cmd.duration.toString();
             case 'loadsc':
                 return cmd.scenario;
+            case 'random':
+                return cmd.entityType === null ? "<none>" : cmd.entityType;
         }
         return "";
     }
